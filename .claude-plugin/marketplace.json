@@ -1,0 +1,16 @@
+{
+  "name": "relay",
+  "owner": {
+    "name": "John Foland"
+  },
+  "metadata": {
+    "description": "The relay workflow plugin for Claude Code and Codex."
+  },
+  "plugins": [
+    {
+      "name": "relay",
+      "source": "./plugins/relay",
+      "description": "Plan, build, review and release work in chunks with Claude Code and Codex."
+    }
+  ]
+}

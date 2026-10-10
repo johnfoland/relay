@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    # The job name is the required status check on master, so rename it only
+    # together with the branch protection.
+    name: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Claude Code's own manifest validator; `make check` runs it when
+      # `claude` is on PATH. It needs no login to validate.
+      - run: npm install --global @anthropic-ai/claude-code
+      - run: make check
