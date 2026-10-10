@@ -18,6 +18,7 @@
   "packages": {
     ".": {
       "package-name": "relay",
+      "initial-version": "0.1.0",
       "extra-files": [
         {
           "type": "json",
