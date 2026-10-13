@@ -87,7 +87,8 @@ reads a plugin's hooks config too (at `hooks/hooks.json` or wherever
 session start (tested with 0.162.1); an inline `hooks` object in `plugin.json`
 is not loaded by Claude Code. Putting the mod inside `relay` would therefore
 cost every Codex user a warning, and a Codex-native manifest to hide it would
-reverse DEC-1. The band shows only before a session's first prompt, and only
+reverse DEC-1. The band shows only before a conversation's first turn (a
+`/clear` starts a new one), and only
 where `AGENTS.md` has a `## Relay workflow` heading, the section every relay
 skill requires.
 

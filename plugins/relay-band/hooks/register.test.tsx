@@ -21,6 +21,9 @@ const session = (on: On, { turns = 0, files = {} as Record<string, string> } = {
     return <Box key="engine" />
   })
   on('session.turns', () => ({ value: turns }))
+  on('session.start', (_$, e) => ({ cwd: e.cwd }))
+  on('session.end', (_$, e) => ({ sessionId: e.sessionId }))
+  on('turn.start', (_$, e) => ({ turnId: e.turnId }))
   on('session.repo', () => ({ value: { root: ROOT, remote: null, internal: false, name: null } }))
   on('fs.read', (_$, e) => {
     const text = files[e.path]
@@ -52,10 +55,37 @@ for (const surface of ['terminal', 'desktop'] as const) {
     expect(ran).toEqual(['relay:go'])
   })
 
-  test(`${surface}: hidden once the session has a prompt`, async ($, on) => {
-    session(on, { turns: 1, files: { [`${ROOT}/AGENTS.md`]: RELAY_AGENTS } })
+  test(`${surface}: hidden once a turn starts`, async ($, on) => {
+    session(on, { files: { [`${ROOT}/AGENTS.md`]: RELAY_AGENTS } })
 
+    const ui = await mount($)
+    await $.turn.start({ text: 'hi', turnId: 't1' })
+    expect(await ui.find({ type: 'Button', key: 'relay-go' })).toBeUndefined()
+  })
+
+  test(`${surface}: hidden in a resumed session`, async ($, on) => {
+    session(on, { turns: 3, files: { [`${ROOT}/AGENTS.md`]: RELAY_AGENTS } })
+
+    await $.session.start({ cwd: ROOT, surface, isInteractive: true })
     expect(await (await mount($)).find({ type: 'Button', key: 'relay-go' })).toBeUndefined()
+  })
+
+  test(`${surface}: back after a /clear`, async ($, on) => {
+    session(on, { files: { [`${ROOT}/AGENTS.md`]: RELAY_AGENTS } })
+
+    const ui = await mount($)
+    await $.turn.start({ text: 'hi', turnId: 't1' })
+    await $.session.end({ reason: 'clear', sessionId: 's1', resume: { id: 's1' } })
+    expect(await ui.find({ type: 'Button', key: 'relay-go' })).toBeDefined()
+  })
+
+  test(`${surface}: stays hidden after an end that is not a /clear`, async ($, on) => {
+    session(on, { files: { [`${ROOT}/AGENTS.md`]: RELAY_AGENTS } })
+
+    const ui = await mount($)
+    await $.turn.start({ text: 'hi', turnId: 't1' })
+    await $.session.end({ reason: 'resume', sessionId: 's1', resume: { id: 's1' } })
+    expect(await ui.find({ type: 'Button', key: 'relay-go' })).toBeUndefined()
   })
 
   test(`${surface}: hidden while a turn runs`, async ($, on) => {

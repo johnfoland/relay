@@ -52,7 +52,7 @@ codex plugin add relay@relay
 **The band (Claude Code only, optional):** a second plugin, `relay-band`,
 puts a `[ /relay:go ]` button above the prompt in a fresh session of a
 repository whose `AGENTS.md` has a *Relay workflow* section. It hides once
-the session has a prompt. Click it, or press ctrl+x tab to focus the band and
+the conversation's first turn starts and comes back after `/clear`. Click it, or press ctrl+x tab to focus the band and
 then Enter or `g`.
 
 ```sh
