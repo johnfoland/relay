@@ -7,10 +7,12 @@ run it. It needs only the standard library. It checks:
 - the marketplace catalog parses, and each plugin it lists exists at its
   source with a plugin.json whose name matches the catalog entry;
 - plugin.json's version is SemVer and equals .release-please-manifest.json's;
+- each plugin has skills, hooks (a Claude Code mod), or both;
 - every skill directory has a SKILL.md whose frontmatter `name` matches the
   directory (lowercase, digits and hyphens, at most 64 characters) and whose
   `description` is non-empty and at most 1024 characters;
-- every `relay:<skill>` a plugin file mentions names a skill that exists;
+- every `relay:<skill>` a plugin file mentions names a skill that exists in
+  one of the catalog's plugins;
 - every `templates/...` path a SKILL.md mentions exists in that skill;
 - no plugin file names a pre-plugin skill (`relay-next`, `/relay-execute`, ...),
   except where the setup skill describes the upgrade from them.
@@ -61,7 +63,8 @@ def load_json(path, errors):
 def check_skills(plugin_dir, errors):
     skills_dir = plugin_dir / "skills"
     if not skills_dir.is_dir():
-        errors.append(f"{plugin_dir}: no skills/ directory")
+        if not (plugin_dir / "hooks" / "hooks.json").is_file():
+            errors.append(f"{plugin_dir}: neither a skills/ directory nor hooks/hooks.json")
         return set()
     names = set()
     for skill in sorted(p for p in skills_dir.iterdir() if p.is_dir()):
@@ -119,6 +122,7 @@ def check(root):
     plugins = catalog.get("plugins") or []
     if not plugins:
         errors.append("marketplace.json lists no plugins")
+    checked, skills = [], set()
     for entry in plugins:
         name, source = entry.get("name"), entry.get("source")
         if not isinstance(source, str):
@@ -135,7 +139,10 @@ def check(root):
             errors.append(f"{plugin_dir}: plugin.json version {version!r} isn't SemVer")
         if manifest is not None and manifest.get(".") != version:
             errors.append(f".release-please-manifest.json has {manifest.get('.')!r}, plugin.json has {version!r}")
-        skills = check_skills(plugin_dir, errors)
+        skills |= check_skills(plugin_dir, errors)
+        checked.append(plugin_dir)
+    # A plugin may name another's skills: relay-band runs relay:go.
+    for plugin_dir in checked:
         check_references(plugin_dir, skills, errors)
     return errors
 

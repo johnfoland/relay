@@ -49,6 +49,16 @@ codex plugin marketplace add johnfoland/relay
 codex plugin add relay@relay
 ```
 
+**The band (Claude Code only, optional):** a second plugin, `relay-band`,
+puts a `[ /relay:go ]` button above the prompt in a fresh session of a
+repository whose `AGENTS.md` has a *Relay workflow* section. It hides once
+the session has a prompt. Click it, or press ctrl+x tab to focus the band and
+then Enter or `g`.
+
+```sh
+claude plugin install relay-band@relay
+```
+
 Both need git and an authenticated [GitHub CLI](https://cli.github.com/)
 (`gh`) in the repositories where you use the workflow.
 
@@ -72,7 +82,9 @@ when the next step is not clear.
 `make check` runs everything CI runs: `tools/check.py` (manifests, skill
 frontmatter, cross-references between skills), its tests, and
 `claude plugin validate` when Claude Code is installed. To try a change
-without installing it, start Claude Code with `claude --plugin-dir plugins/relay`.
+without installing it, start Claude Code with `claude --plugin-dir plugins/relay`
+(add `--plugin-dir plugins/relay-band` for the band). `make check` also runs the
+band's tests with `claude plugin test`.
 
 ## License
 

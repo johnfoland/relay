@@ -11,6 +11,11 @@
       "name": "relay",
       "source": "./plugins/relay",
       "description": "Plan, build, review and release work in chunks with Claude Code and Codex."
+    },
+    {
+      "name": "relay-band",
+      "source": "./plugins/relay-band",
+      "description": "Claude Code only: a button above the prompt that runs relay:go in a fresh session of a relay repository."
     }
   ]
 }

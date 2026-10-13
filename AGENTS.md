@@ -25,6 +25,11 @@ the way it is.
 - `plugins/relay/skills/<skill>/SKILL.md`: one skill per directory, the
   directory name equal to the frontmatter `name`. `setup/templates/` holds
   what `relay:setup` writes into a repository.
+- `plugins/relay-band/`: a second, Claude Code-only plugin (a mod): the
+  `hooks/register.tsx` module draws a button above the prompt that runs
+  `relay:go` in a fresh session of a relay repository; `hooks/*.test.tsx` are
+  its tests. It shares relay's version (release-please bumps both manifests)
+  and must not move into `plugins/relay` (DEC-7).
 - `tools/check.py`: the structural check `make check` runs; `tests/` tests it.
 
 ## Commands
@@ -33,7 +38,11 @@ the way it is.
   `claude plugin validate` when `claude` is on PATH). Run it before every
   push.
 - `claude --plugin-dir plugins/relay`: a Claude Code session with your working
-  copy of the plugin loaded instead of the installed one.
+  copy of the plugin loaded instead of the installed one; add
+  `--plugin-dir plugins/relay-band` for the band. An interactive session that
+  loads it lays the mod API's types in `.claude-plugin/types/` and a
+  `tsconfig.json` beside them (both git-ignored); then
+  `npx tsc -p plugins/relay-band` type-checks it.
 
 ## Workflow
 

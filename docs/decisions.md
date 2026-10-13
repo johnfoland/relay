@@ -76,3 +76,20 @@ It detects release-please and a GitHub Issues roadmap but does not install
 them; those are repository conventions outside the relay.
 
 *Where:* `skills/setup/SKILL.md` §1 and §4.
+
+## DEC-7: The prompt band is a separate, Claude Code-only plugin (2026-10)
+
+The `[ /relay:go ]` button above the prompt is a Claude Code mod, shipped as
+its own plugin, `relay-band`, in the same marketplace and at the same version
+as `relay`. A mod is declared by a hooks config holding `modules`, and Codex
+reads a plugin's hooks config too (at `hooks/hooks.json` or wherever
+`plugin.json`'s `hooks` points) and warns `unknown field 'modules'` on every
+session start (tested with 0.162.1); an inline `hooks` object in `plugin.json`
+is not loaded by Claude Code. Putting the mod inside `relay` would therefore
+cost every Codex user a warning, and a Codex-native manifest to hide it would
+reverse DEC-1. The band shows only before a session's first prompt, and only
+where `AGENTS.md` has a `## Relay workflow` heading, the section every relay
+skill requires.
+
+*Where:* `plugins/relay-band/`, README.md (Install), AGENTS.md (Layout),
+`release-please-config.json`, `tools/check.py`.

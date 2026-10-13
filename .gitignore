@@ -225,3 +225,8 @@ __marimo__/
 
 # Machine-specific agent notes
 CLAUDE.local.md
+
+# What Claude Code lays beside a mod an interactive session loads: its API
+# types and a tsconfig.json extending them
+plugins/*/.claude-plugin/types/
+plugins/relay-band/tsconfig.json

@@ -35,6 +35,15 @@ class CheckTest(unittest.TestCase):
         write(self.plugin / "skills/plan/SKILL.md", skill("plan", "Copy `templates/brief.md`."))
         write(self.plugin / "skills/plan/templates/brief.md", "# Brief\n")
 
+    def add_plugin(self, name):
+        catalog = self.root / ".claude-plugin/marketplace.json"
+        data = json.loads(catalog.read_text())
+        data["plugins"].append({"name": name, "source": f"./plugins/{name}"})
+        catalog.write_text(json.dumps(data))
+        plugin = self.root / "plugins" / name
+        write(plugin / ".claude-plugin/plugin.json", json.dumps({"name": name, "version": "0.1.0"}))
+        return plugin
+
     def assertProblem(self, fragment):
         errors = check.check(self.root)
         self.assertTrue(any(fragment in e for e in errors), f"{fragment!r} not in {errors}")
@@ -76,6 +85,17 @@ class CheckTest(unittest.TestCase):
     def test_missing_template(self):
         write(self.plugin / "skills/plan/SKILL.md", skill("plan", "Copy `templates/gone.md`."))
         self.assertProblem("templates/gone.md, which doesn't exist")
+
+    def test_plugin_with_neither_skills_nor_hooks(self):
+        self.add_plugin("empty")
+        self.assertProblem("neither a skills/ directory nor hooks/hooks.json")
+
+    def test_hooks_only_plugin_may_name_another_plugins_skill(self):
+        band = self.add_plugin("band")
+        write(band / "hooks/hooks.json", json.dumps({"modules": ["./register.tsx"]}))
+        write(band / ".claude-plugin/plugin.json", json.dumps(
+            {"name": "band", "version": "0.1.0", "description": "Runs relay:go."}))
+        self.assertEqual(check.check(self.root), [])
 
     def test_old_skill_name(self):
         write(self.plugin / "skills/go/SKILL.md", skill("go", "Then run `/relay-next`."))
