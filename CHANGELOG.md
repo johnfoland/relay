@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/johnfoland/relay/compare/v0.2.0...v0.2.1) (2026-10-13)
+
+
+### Bug Fixes
+
+* **relay-band:** show the band again after /clear ([#5](https://github.com/johnfoland/relay/issues/5)) ([652a89e](https://github.com/johnfoland/relay/commit/652a89e2f28e475d59170e6bbd782a92f95dc354))
+
 ## [0.2.0](https://github.com/johnfoland/relay/compare/v0.1.0...v0.2.0) (2026-10-13)
 
 
