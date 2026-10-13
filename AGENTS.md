@@ -28,7 +28,7 @@ the way it is.
 - `plugins/relay-band/`: a second, Claude Code-only plugin (a mod): the
   `hooks/register.tsx` module draws a button above the prompt that runs
   `relay:go` in a fresh session of a relay repository; `hooks/*.test.tsx` are
-  its tests. It shares relay's version (release-please bumps both manifests)
+  its tests and `types/index.d.ts` declares its session state. It shares relay's version (release-please bumps both manifests)
   and must not move into `plugins/relay` (DEC-7).
 - `tools/check.py`: the structural check `make check` runs; `tests/` tests it.
 
