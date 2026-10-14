@@ -1,6 +1,6 @@
 {
   "name": "relay",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Plan, build, review and release work in chunks with Claude Code and Codex: a planner/executor workflow that hands work between fresh agent sessions through local process files and pull requests.",
   "author": {
     "name": "John Foland"
