@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/johnfoland/relay/compare/v0.2.1...v0.3.0) (2026-10-14)
+
+
+### Features
+
+* **relay-band:** draw the go button as a chip ([#7](https://github.com/johnfoland/relay/issues/7)) ([b912390](https://github.com/johnfoland/relay/commit/b912390809024126505b6b1a6a77a957e51a6995))
+
 ## [0.2.1](https://github.com/johnfoland/relay/compare/v0.2.0...v0.2.1) (2026-10-13)
 
 
