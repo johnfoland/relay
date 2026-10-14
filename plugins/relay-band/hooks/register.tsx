@@ -57,10 +57,21 @@ export const register: Register = on => {
         $.ui.toast(`relay-band: ${error instanceof Error ? error.message : String(error)}`)
       })
 
+    // The terminal's Button chrome pads its label (`[ label ]`); a plain Button
+    // holding a filled Text draws a chip instead. Other surfaces draw a native
+    // button either way, so they keep the label.
     return (
       <Box>
-        <Text dimColor>Relay workflow </Text>
-        <Button key="relay-go" label="/relay:go" hotkey="g" variant="primary" onPress={go} />
+        <Text dimColor>relay </Text>
+        {e.surface === 'terminal' ? (
+          <Button key="relay-go" label="/relay:go" plain onPress={go}>
+            <Text bold color="inverseText" backgroundColor="claude">
+              {' ▶ relay:go '}
+            </Text>
+          </Button>
+        ) : (
+          <Button key="relay-go" label="/relay:go" hotkey="g" variant="primary" onPress={go} />
+        )}
       </Box>
     )
   })
