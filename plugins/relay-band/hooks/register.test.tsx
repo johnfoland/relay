@@ -36,6 +36,9 @@ const session = (on: On, { turns = 0, files = {} as Record<string, string> } = {
 
 const RELAY_AGENTS = '# app\n\n## Commands\n\n- make check\n\n## Relay workflow\n\n- Gate: make check\n'
 
+const status = (run: string, why: string) =>
+  `# Status\n\n## Next\n\n- **Run:** ${run}\n- **Why:** ${why}\n- **Set by:** \`relay:plan\`, 2026-10-10\n\n## In flight\n\n- **State:** none\n`
+
 for (const surface of ['terminal', 'desktop'] as const) {
   const mount = ($: Engine, isWorking = false) =>
     $.ui.mount({ plugin: 'relay-band', surface, component: 'AbovePrompt', props: props(isWorking) })
@@ -104,5 +107,64 @@ for (const surface of ['terminal', 'desktop'] as const) {
     session(on)
 
     expect(await (await mount($)).find({ type: 'Button', key: 'relay-go' })).toBeUndefined()
+  })
+
+  test(`${surface}: shows the queued step beside the button`, async ($, on) => {
+    session(on, {
+      files: {
+        [`${ROOT}/AGENTS.md`]: RELAY_AGENTS,
+        [`${ROOT}/.relay/status.md`]: status('`relay:execute`', 'P0002-C03 is ready for an\n  executor.'),
+      },
+    })
+
+    const hint = await (await mount($)).find({ type: 'Text', text: /relay:execute/ })
+    expect(hint?.text).toBe(' relay:execute · P0002-C03 is ready for an executor.')
+  })
+
+  test(`${surface}: reads the status file where the settings put it`, async ($, on) => {
+    const agents = `${RELAY_AGENTS}- **Status:** \`process/status.md\` (local)\n\n## Other\n\n- **Status:** \`elsewhere.md\`\n`
+    session(on, {
+      files: {
+        [`${ROOT}/AGENTS.md`]: agents,
+        [`${ROOT}/process/status.md`]: status('`relay:review`', 'P0002-C03 is awaiting review.'),
+      },
+    })
+
+    expect(await (await mount($)).find({ type: 'Text', text: /relay:review/ })).toBeDefined()
+  })
+
+  test(`${surface}: no hint when nothing is queued`, async ($, on) => {
+    session(on, {
+      files: {
+        [`${ROOT}/AGENTS.md`]: RELAY_AGENTS,
+        [`${ROOT}/.relay/status.md`]: status('—', 'nothing is queued yet.'),
+      },
+    })
+
+    const ui = await mount($)
+    expect(await ui.find({ type: 'Button', key: 'relay-go' })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /queued/ })).toBeUndefined()
+  })
+
+  test(`${surface}: no hint without a status file`, async ($, on) => {
+    session(on, { files: { [`${ROOT}/AGENTS.md`]: RELAY_AGENTS } })
+
+    const ui = await mount($)
+    expect(await ui.find({ type: 'Button', key: 'relay-go' })).toBeDefined()
+    expect(await ui.findAll({ type: 'Text', text: /·/ })).toHaveLength(0)
+  })
+
+  test(`${surface}: after a /clear, shows the step the last conversation queued`, async ($, on) => {
+    const files = {
+      [`${ROOT}/AGENTS.md`]: RELAY_AGENTS,
+      [`${ROOT}/.relay/status.md`]: status('`relay:execute`', 'P0002-C03 is ready for an executor.'),
+    }
+    session(on, { files })
+
+    const ui = await mount($)
+    await $.turn.start({ text: 'hi', turnId: 't1' })
+    files[`${ROOT}/.relay/status.md`] = status('`relay:review`', 'P0002-C03 is awaiting review.')
+    await $.session.end({ reason: 'clear', sessionId: 's1', resume: { id: 's1' } })
+    expect(await ui.find({ type: 'Text', text: /relay:review/ })).toBeDefined()
   })
 }

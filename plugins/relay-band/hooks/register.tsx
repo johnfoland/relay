@@ -11,18 +11,81 @@ const RELAY_SECTION = /^## Relay workflow[ \t]*$/m
 // drawing is cached: only a state write (or an invalidate) redraws it.
 const hasTurn = atom({ plugin: 'relay-band', key: 'hasTurn' } as const, false as HasTurn)
 
-const isRelayRepo = async ($: EngineInterface) => {
+// The section's setting that moves the status file, and where it is otherwise.
+const STATUS_SETTING = /^- \*\*Status:\*\* `([^`]+)`/m
+const DEFAULT_STATUS = '.relay/status.md'
+
+// The status file's absolute path, or undefined where the repo has no relay
+// section. The repo's root is the main working tree's, where the file lives.
+const findStatusPath = async ($: EngineInterface) => {
   const root = (await $.session.repo())?.root ?? (await $.session.cwd())
+  let agents: string
   try {
-    return RELAY_SECTION.test(await $.fs.read(`${root}/AGENTS.md`))
+    agents = await $.fs.read(`${root}/AGENTS.md`)
   } catch {
-    return false
+    return undefined
   }
+  const section = sectionAfter(agents, RELAY_SECTION)
+  if (section === undefined) {
+    return undefined
+  }
+  const path = STATUS_SETTING.exec(section)?.[1] ?? DEFAULT_STATUS
+  return path.startsWith('/') ? path : `${root}/${path}`
+}
+
+// The text under the heading `heading` matches, up to the next `## ` heading.
+const sectionAfter = (text: string, heading: RegExp) => {
+  const match = heading.exec(text)
+  if (!match) {
+    return undefined
+  }
+  const body = text.slice(match.index + match[0].length)
+  const end = body.search(/^## /m)
+  return end < 0 ? body : body.slice(0, end)
+}
+
+const plain = (text: string) => text.replace(/\*\*|`/g, '').replace(/\s+/g, ' ').trim()
+
+// The Next block's fields (`- **Run:** …`, continuation lines indented), as
+// the relay skills write them; a hint is shown only when a step is queued.
+const readNext = async ($: EngineInterface, statusPath: string) => {
+  let status: string
+  try {
+    status = await $.fs.read(statusPath)
+  } catch {
+    return undefined
+  }
+  const block = sectionAfter(status, /^## Next[ \t]*$/m)
+  if (block === undefined) {
+    return undefined
+  }
+  const fields: Record<string, string> = {}
+  let field: string | undefined
+  for (const line of block.split('\n')) {
+    const start = /^- \*\*(\w[\w ]*):\*\*(.*)$/.exec(line)
+    if (start) {
+      const [, name = '', value = ''] = start
+      field = name
+      fields[field] = value
+    } else if (field !== undefined && /^\s+\S/.test(line)) {
+      fields[field] += ` ${line}`
+    } else {
+      field = undefined
+    }
+  }
+  const run = plain(fields.Run ?? '')
+  if (run === '' || run === '—' || run === '-') {
+    return undefined
+  }
+  const why = plain(fields.Why ?? '')
+  return why === '' ? run : `${run} · ${why}`
 }
 
 export const register: Register = on => {
-  // Read once per load: the band only matters before the conversation's first turn.
-  let isRelay: Promise<boolean> | undefined
+  // AGENTS.md is read once per load: the band only matters before the
+  // conversation's first turn. The status file is read at each drawing, so a
+  // /clear's redraw shows the step the last conversation queued.
+  let statusPath: Promise<string | undefined> | undefined
 
   // A resumed session starts with turns of its own.
   on('session.start', async ($, e, next) => {
@@ -47,9 +110,14 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const isBusy = e.props.hasSurvey || e.props.isWorking || e.props.view.agentId !== undefined
-    if (isBusy || (await read($, hasTurn)) || !(await (isRelay ??= isRelayRepo($)))) {
+    if (isBusy || (await read($, hasTurn))) {
       return next(e)
     }
+    const path = await (statusPath ??= findStatusPath($))
+    if (path === undefined) {
+      return next(e)
+    }
+    const hint = await readNext($, path)
 
     const { Box, Button, Text } = $.ui.resolve(e)
     const go = () =>
@@ -71,6 +139,11 @@ export const register: Register = on => {
           </Button>
         ) : (
           <Button key="relay-go" label="/relay:go" hotkey="g" variant="primary" onPress={go} />
+        )}
+        {hint !== undefined && (
+          <Box flexShrink={1}>
+            <Text dimColor wrap="truncate-end">{` ${hint}`}</Text>
+          </Box>
         )}
       </Box>
     )
