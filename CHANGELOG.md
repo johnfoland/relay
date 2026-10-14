@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/johnfoland/relay/compare/v0.3.0...v0.4.0) (2026-10-14)
+
+
+### Features
+
+* **relay-band:** show the queued step beside the go button ([#10](https://github.com/johnfoland/relay/issues/10)) ([1e3de77](https://github.com/johnfoland/relay/commit/1e3de77b5e6709a5a7a3975f56cd92bd524acc82)), closes [#9](https://github.com/johnfoland/relay/issues/9)
+
 ## [0.3.0](https://github.com/johnfoland/relay/compare/v0.2.1...v0.3.0) (2026-10-14)
 
 
