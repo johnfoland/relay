@@ -55,7 +55,9 @@ repository whose `AGENTS.md` has a *Relay workflow* section, followed by the
 step the status file's *Next* block has queued, when there is one. It hides
 once the conversation's first turn starts and comes back after `/clear`.
 Click it, or press ctrl+x tab to focus the band and then Enter (or `g` on the
-desktop app).
+desktop app). When a turn ends with an answer and has queued a step the
+conversation did not start with, the band offers `▶ /clear` instead (`c` on
+the desktop app), so the next step starts in a fresh conversation.
 
 ```sh
 claude plugin install relay-band@relay
