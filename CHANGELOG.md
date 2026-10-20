@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/johnfoland/relay/compare/v0.4.0...v0.5.0) (2026-10-20)
+
+
+### Features
+
+* **relay-band:** draw the go button as a split pill ([#12](https://github.com/johnfoland/relay/issues/12)) ([11c4216](https://github.com/johnfoland/relay/commit/11c421650328dfc61c9330167096e6450f997e32))
+
 ## [0.4.0](https://github.com/johnfoland/relay/compare/v0.3.0...v0.4.0) (2026-10-14)
 
 
