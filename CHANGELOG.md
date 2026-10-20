@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/johnfoland/relay/compare/v0.5.1...v0.6.0) (2026-10-20)
+
+
+### Features
+
+* **relay-band:** offer /clear once a turn hands off ([#16](https://github.com/johnfoland/relay/issues/16)) ([a4b1bd5](https://github.com/johnfoland/relay/commit/a4b1bd53ce4d66f1f9c6aa7f7de0df8c8ee59809))
+
 ## [0.5.1](https://github.com/johnfoland/relay/compare/v0.5.0...v0.5.1) (2026-10-20)
 
 
