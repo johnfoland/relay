@@ -1,6 +1,6 @@
 {
   "name": "relay-band",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Claude Code only: a band above the prompt with a button that runs the relay's go skill, shown in a fresh session of a repository that uses the relay workflow.",
   "types": "./types/index.d.ts",
   "author": {

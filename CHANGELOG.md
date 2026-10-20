@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/johnfoland/relay/compare/v0.5.0...v0.5.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* **relay-band:** draw the go button as one chip again ([#14](https://github.com/johnfoland/relay/issues/14)) ([4ad2446](https://github.com/johnfoland/relay/commit/4ad24465f0f773f13eceacdd1ea415211679d322))
+
 ## [0.5.0](https://github.com/johnfoland/relay/compare/v0.4.0...v0.5.0) (2026-10-20)
 
 
