@@ -126,22 +126,22 @@ export const register: Register = on => {
       })
 
     // The terminal's Button chrome pads its label (`[ label ]`); a plain Button
-    // holding filled Texts draws a split pill instead: the mark and name on a
-    // muted half, the action on the accent. Other surfaces draw a native
-    // button either way, so they keep the label and take the mark beside it.
+    // holding one filled Text draws a chip instead. It stays one Text: the
+    // pointer and the focus invert each child, so parts of different colors
+    // would each flip their own way. Other surfaces draw a native button
+    // either way, so they keep the label. The mark sits in front, outside the
+    // Button, so a hover leaves it alone.
     return (
       <Box>
+        <Text color="claude">⇄ </Text>
         {e.surface === 'terminal' ? (
           <Button key="relay-go" label="/relay:go" plain onPress={go}>
-            <Text color="claude" backgroundColor="subtle">{' ⇄'}</Text>
-            <Text color="text" backgroundColor="subtle">{' relay '}</Text>
-            <Text bold color="inverseText" backgroundColor="claude">{' ▶ go '}</Text>
+            <Text bold color="inverseText" backgroundColor="claude">
+              {' ▶ relay:go '}
+            </Text>
           </Button>
         ) : (
-          <>
-            <Text color="claude">⇄ </Text>
-            <Button key="relay-go" label="/relay:go" hotkey="g" variant="primary" onPress={go} />
-          </>
+          <Button key="relay-go" label="/relay:go" hotkey="g" variant="primary" onPress={go} />
         )}
         {hint !== undefined && (
           <Box flexShrink={1}>
