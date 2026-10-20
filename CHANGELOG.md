@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/johnfoland/relay/compare/v0.6.0...v0.6.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* **execute:** drop the pr-body-md skill reference ([#18](https://github.com/johnfoland/relay/issues/18)) ([cc86d38](https://github.com/johnfoland/relay/commit/cc86d383b27e975006535461e52bc3c9591ce8c2))
+
 ## [0.6.0](https://github.com/johnfoland/relay/compare/v0.5.1...v0.6.0) (2026-10-20)
 
 
