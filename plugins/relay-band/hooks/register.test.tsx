@@ -24,6 +24,7 @@ const session = (on: On, { turns = 0, files = {} as Record<string, string> } = {
   on('session.start', (_$, e) => ({ cwd: e.cwd }))
   on('session.end', (_$, e) => ({ sessionId: e.sessionId }))
   on('turn.start', (_$, e) => ({ turnId: e.turnId }))
+  on('turn.complete', (_$, e) => ({ text: e.answer }))
   on('session.repo', () => ({ value: { root: ROOT, remote: null, internal: false, name: null } }))
   on('fs.read', (_$, e) => {
     const text = files[e.path]
@@ -38,6 +39,14 @@ const RELAY_AGENTS = '# app\n\n## Commands\n\n- make check\n\n## Relay workflow\
 
 const status = (run: string, why: string) =>
   `# Status\n\n## Next\n\n- **Run:** ${run}\n- **Why:** ${why}\n- **Set by:** \`relay:plan\`, 2026-10-10\n\n## In flight\n\n- **State:** none\n`
+
+const complete = (reason: 'answer' | 'aborted' | 'error' = 'answer') => ({
+  answer: 'done',
+  durationMs: 1,
+  isAborted: reason === 'aborted',
+  turnId: 't1',
+  reason,
+})
 
 for (const surface of ['terminal', 'desktop'] as const) {
   const mount = ($: Engine, isWorking = false) =>
@@ -166,5 +175,101 @@ for (const surface of ['terminal', 'desktop'] as const) {
     files[`${ROOT}/.relay/status.md`] = status('`relay:review`', 'P0002-C03 is awaiting review.')
     await $.session.end({ reason: 'clear', sessionId: 's1', resume: { id: 's1' } })
     expect(await ui.find({ type: 'Text', text: /relay:review/ })).toBeDefined()
+  })
+
+  // A turn that starts on the plan's handoff and ends having queued review.
+  const handOff = async ($: Engine, files: Record<string, string>, reason?: 'answer' | 'aborted' | 'error') => {
+    await $.turn.start({ text: '/relay:go', turnId: 't1' })
+    files[`${ROOT}/.relay/status.md`] = status('`relay:review`', 'P0002-C03 is awaiting review.')
+    await $.turn.complete(complete(reason))
+  }
+
+  const relayFiles = () => ({
+    [`${ROOT}/AGENTS.md`]: RELAY_AGENTS,
+    [`${ROOT}/.relay/status.md`]: status('`relay:execute`', 'P0002-C03 is ready for an executor.'),
+  })
+
+  test(`${surface}: a turn that queues the next step offers /clear, and pressing it runs clear`, async ($, on) => {
+    const ran: string[] = []
+    const files = relayFiles()
+    session(on, { files })
+    on('command.run', (_$, e) => {
+      ran.push(e.command)
+      return {}
+    })
+
+    const ui = await mount($)
+    await handOff($, files)
+    expect(await ui.find({ type: 'Button', key: 'relay-go' })).toBeUndefined()
+    expect(await ui.find({ type: 'Button', key: 'relay-clear' })).toBeDefined()
+    const hint = await ui.find({ type: 'Text', text: /queued/ })
+    expect(hint?.text).toBe(' queued: relay:review · P0002-C03 is awaiting review.')
+
+    await ui.press({ key: 'relay-clear' })
+    expect(ran).toEqual(['clear'])
+  })
+
+  test(`${surface}: no /clear after a turn that left the Next block as it was`, async ($, on) => {
+    session(on, { files: relayFiles() })
+
+    const ui = await mount($)
+    await $.turn.start({ text: 'hi', turnId: 't1' })
+    await $.turn.complete(complete())
+    expect(await ui.find({ type: 'Button', key: 'relay-clear' })).toBeUndefined()
+  })
+
+  for (const reason of ['aborted', 'error'] as const) {
+    test(`${surface}: no /clear after a turn that ended ${reason}`, async ($, on) => {
+      const files = relayFiles()
+      session(on, { files })
+
+      const ui = await mount($)
+      await handOff($, files, reason)
+      expect(await ui.find({ type: 'Button', key: 'relay-clear' })).toBeUndefined()
+    })
+  }
+
+  test(`${surface}: no /clear when the turn left nothing queued`, async ($, on) => {
+    const files = relayFiles()
+    session(on, { files })
+
+    const ui = await mount($)
+    await $.turn.start({ text: 'hi', turnId: 't1' })
+    files[`${ROOT}/.relay/status.md`] = status('—', 'nothing is queued yet.')
+    await $.turn.complete(complete())
+    expect(await ui.find({ type: 'Button', key: 'relay-clear' })).toBeUndefined()
+  })
+
+  test(`${surface}: /clear stays offered after a later turn that answered`, async ($, on) => {
+    const files = relayFiles()
+    session(on, { files })
+
+    const ui = await mount($)
+    await handOff($, files)
+    await $.turn.start({ text: 'thanks', turnId: 't2' })
+    expect(await ui.find({ type: 'Button', key: 'relay-clear' })).toBeUndefined()
+    await $.turn.complete({ ...complete(), turnId: 't2' })
+    expect(await ui.find({ type: 'Button', key: 'relay-clear' })).toBeDefined()
+  })
+
+  test(`${surface}: after the /clear, the go button offers the queued step`, async ($, on) => {
+    const files = relayFiles()
+    session(on, { files })
+
+    const ui = await mount($)
+    await handOff($, files)
+    await $.session.end({ reason: 'clear', sessionId: 's1', resume: { id: 's1' } })
+    expect(await ui.find({ type: 'Button', key: 'relay-clear' })).toBeUndefined()
+    expect(await ui.find({ type: 'Button', key: 'relay-go' })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /relay:review/ })).toBeDefined()
+  })
+
+  test(`${surface}: no /clear where AGENTS.md has no Relay workflow section`, async ($, on) => {
+    const files = { ...relayFiles(), [`${ROOT}/AGENTS.md`]: '# app\n' }
+    session(on, { files })
+
+    const ui = await mount($)
+    await handOff($, files)
+    expect(await ui.find({ type: 'Button', key: 'relay-clear' })).toBeUndefined()
   })
 }

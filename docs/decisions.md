@@ -87,10 +87,15 @@ reads a plugin's hooks config too (at `hooks/hooks.json` or wherever
 session start (tested with 0.162.1); an inline `hooks` object in `plugin.json`
 is not loaded by Claude Code. Putting the mod inside `relay` would therefore
 cost every Codex user a warning, and a Codex-native manifest to hide it would
-reverse DEC-1. The band shows only before a conversation's first turn (a
-`/clear` starts a new one), and only
-where `AGENTS.md` has a `## Relay workflow` heading, the section every relay
-skill requires.
+reverse DEC-1. The band shows only where `AGENTS.md` has a
+`## Relay workflow` heading, the section every relay skill requires. It
+offers `relay:go` before a conversation's first turn (a `/clear` starts a new
+one). Since 2026-10 it also offers `/clear` once a turn has ended with an
+answer (not interrupted, refused, or failed) and left a queued step in a
+*Next* block that differs from the one the conversation started with: the
+handoff is complete, and each relay step runs in a fresh session. A changed
+block, rather than a write to the status file, is the signal because skills
+also update the file mid-step.
 
 *Where:* `plugins/relay-band/`, README.md (Install), AGENTS.md (Layout),
 `release-please-config.json`, `tools/check.py`.
