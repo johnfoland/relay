@@ -126,19 +126,22 @@ export const register: Register = on => {
       })
 
     // The terminal's Button chrome pads its label (`[ label ]`); a plain Button
-    // holding a filled Text draws a chip instead. Other surfaces draw a native
-    // button either way, so they keep the label.
+    // holding filled Texts draws a split pill instead: the mark and name on a
+    // muted half, the action on the accent. Other surfaces draw a native
+    // button either way, so they keep the label and take the mark beside it.
     return (
       <Box>
-        <Text dimColor>relay </Text>
         {e.surface === 'terminal' ? (
           <Button key="relay-go" label="/relay:go" plain onPress={go}>
-            <Text bold color="inverseText" backgroundColor="claude">
-              {' ▶ relay:go '}
-            </Text>
+            <Text color="claude" backgroundColor="subtle">{' ⇄'}</Text>
+            <Text color="text" backgroundColor="subtle">{' relay '}</Text>
+            <Text bold color="inverseText" backgroundColor="claude">{' ▶ go '}</Text>
           </Button>
         ) : (
-          <Button key="relay-go" label="/relay:go" hotkey="g" variant="primary" onPress={go} />
+          <>
+            <Text color="claude">⇄ </Text>
+            <Button key="relay-go" label="/relay:go" hotkey="g" variant="primary" onPress={go} />
+          </>
         )}
         {hint !== undefined && (
           <Box flexShrink={1}>
