@@ -242,11 +242,10 @@ Neither the report nor the status file is committed. Then, in order:
    it must stand alone: what landed, what the tests pin, decisions made (by
    decision ID), and doc inconsistencies found, with no link to or citation of
    the chunk file, the brief, or a checklist entry.
-   If the `pr-body-md` skill is available, follow its rules for the body,
-   drawing on the report rather than a fresh read of the diff. If the brief
-   names issues the chunk resolves, the body closes them (`Fixes #N`). Make
-   sure the title names what the chunk delivered, without the chunk ID: it
-   becomes the squash commit's subject on `<integration>`. Under
+   If the brief names issues the chunk resolves, the body closes them
+   (`Fixes #N`). Make sure the title names what the chunk delivered, without
+   the chunk ID: it becomes the squash commit's subject on `<integration>`.
+   Under
    release-please it is also a Conventional Commit whose type fits the whole
    chunk's user-visible effect: `feat(config): layered config loading`,
    `fix!: …` for a breaking change. A chunk with no
