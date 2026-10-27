@@ -95,7 +95,9 @@ answer (not interrupted, refused, or failed) and left a queued step in a
 *Next* block that differs from the one the conversation started with: the
 handoff is complete, and each relay step runs in a fresh session. A changed
 block, rather than a write to the status file, is the signal because skills
-also update the file mid-step.
+also update the file mid-step. The band cannot see a turn's background work,
+so the skills keep the signal honest instead: each writes the *Next* block
+only once its step is done, after any CI it waits on is green.
 
 *Where:* `plugins/relay-band/`, README.md (Install), AGENTS.md (Layout),
 `release-please-config.json`, `tools/check.py`.

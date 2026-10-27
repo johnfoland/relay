@@ -107,8 +107,10 @@ The roadmap is the issue list on `johnfoland/relay`. Keep it current:
   belong in its own AGENTS.md, which the skills read (DEC-6).
 - **Every handoff writes the Next block.** A skill that changes what should
   run next sets the status file's *Next* block and closes by telling the user
-  to run `relay:go`. `relay:go`'s §2 table and the skills that write the block
-  must agree (DEC-3).
+  to run `relay:go`. It writes the block last, once nothing it is waiting on
+  (CI, a merge) can still change the step: the band offers `/clear` as soon as
+  the block changes (DEC-7). `relay:go`'s §2 table and the skills that write
+  the block must agree (DEC-3).
 - **Old names live only in `setup`.** `setup`'s migration text is the one place
   that names the pre-plugin `relay-*` skills; `tools/check.py` fails on them
   anywhere else.
