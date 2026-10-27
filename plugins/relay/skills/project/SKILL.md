@@ -240,7 +240,8 @@ docs-only work. Commit only the tracked design files in scope (authority docs,
 the decision log, AGENTS.md, a docs index), and land them through a
 `plan/<slug>` pull request into `<integration>`: wait for its CI, self-review
 the diff, and squash-merge it. A session that changed only the project file
-and the index has nothing to commit.
+and the index has nothing to commit. Write the **Next** block last, once that
+pull request has merged: a queued step says this session is done.
 
 Report the project ID and state, the design decisions and decision-log entries
 that landed, the authority sections changed, the next delivery item, and any

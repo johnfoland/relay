@@ -253,16 +253,20 @@ Neither the report nor the status file is committed. Then, in order:
    releases nothing on its own.
 2. `gh pr ready <NN>`. In the status file, set `State` to `awaiting review`
    and the pull request's `(draft)` to `(ready)`, leaving `Branch` and
-   `Pull request` in place. Set the **Next** block to `relay:review`, its Why
-   naming the chunk and its pull request.
+   `Pull request` in place.
 3. If the repo has CI, wait for the pull request's run
-   (`gh pr checks <NN> --watch`). The handoff is not complete until the head
-   commit is green: a race the unit runs passed by luck can still fail here.
+   (`gh pr checks <NN> --watch`), in this turn rather than in the background:
+   the handoff is not complete until the head commit is green, and a race the
+   unit runs passed by luck can still fail here.
    If it is red, re-run it once (`gh run rerun <id> --failed`); a pass names a
    flake, with the failing test and the run id, under the report's *Notes*. A
    second red is fixed as its own commit, said so under *Notes* (in the chunk
    file and the pull request body), and waited on again.
-4. Print the same report in chat and close with: *"In a fresh session at this
+4. Only now, with the head green, set the **Next** block to `relay:review`,
+   its Why naming the chunk and its pull request. A queued step says this
+   session is done, so it must not be written while CI can still send the
+   chunk back.
+5. Print the same report in chat and close with: *"In a fresh session at this
    repo, run `relay:go` (next: `relay:review`)."*
 
 ```markdown
