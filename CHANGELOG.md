@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/johnfoland/relay/compare/v0.6.1...v0.6.2) (2026-10-27)
+
+
+### Bug Fixes
+
+* **execute:** queue relay:review only after CI is green ([#20](https://github.com/johnfoland/relay/issues/20)) ([e5df051](https://github.com/johnfoland/relay/commit/e5df051f28c9af4d43ab2564c1a20bb1ba52d9ba))
+
 ## [0.6.1](https://github.com/johnfoland/relay/compare/v0.6.0...v0.6.1) (2026-10-20)
 
 
