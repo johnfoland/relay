@@ -165,7 +165,9 @@ maintainer picks which, related ones grouped, instead of each loose end
 becoming an issue unasked. Checklists stay under twenty short entries and may
 retire one the gate now catches. `relay:setup` prunes repositories set up
 before this (§7), as a mode rather than its own skill, since it is a one-off
-upgrade like the migrations setup already owns.
+upgrade like the migrations setup already owns. Changed 2026-10: the prune
+became migrations 3 to 6 under DEC-13, because the stamp records what a
+repository has reviewed and the update offers each change on its own.
 
 *Where:* `skills/setup/templates/status.md`, `skills/review/SKILL.md`,
 `skills/execute/SKILL.md` §5, `skills/setup/SKILL.md` §7.
@@ -181,3 +183,22 @@ earlier reports, written for the next session, left the maintainer unable to
 follow what the sessions did or answer their questions.
 
 *Where:* the *Hand-off* section of each skill.
+
+## DEC-13: `relay:setup` updates repositories through a stamp and migrations (2026-10)
+
+`relay:setup` follows the Stamp convention: each repository it sets up
+carries a tracked stamp, `.agents/relay.toml`, recording the highest entry
+of the setup skill's `MIGRATIONS.md` it has been reviewed against and what
+the maintainer put off or turned down; an update offers only the entries
+after it, each with a **Detect** and an **Apply** line. Migration levels are
+their own numbers, not the plugin's version: most releases change how a
+skill runs and need nothing from repositories. Entries for the git-ignored
+`.relay/` files are `local` and checked on every update, since the stamp
+travels with the repository and they do not. Guessing what a repository
+lacks from its files alone, as the update did before, was ruled out: it
+could not tell a change the maintainer declined from one never offered.
+`relay:go` suggests the update when the stamp is behind, as it suggests a
+release, and never runs it.
+
+*Where:* `skills/setup/SKILL.md` §7, `skills/setup/MIGRATIONS.md`,
+`skills/setup/templates/relay.toml`, `skills/go/SKILL.md` §5.

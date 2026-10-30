@@ -13,7 +13,12 @@ run it. It needs only the standard library. It checks:
   `description` is non-empty and at most 1024 characters;
 - every `relay:<skill>` a plugin file mentions names a skill that exists in
   one of the catalog's plugins;
-- every `templates/...` path a SKILL.md mentions exists in that skill;
+- every `templates/...` path a SKILL.md or MIGRATIONS.md mentions exists in
+  that skill;
+- a skill's MIGRATIONS.md (the Stamp convention) has front matter giving
+  `stamp: 1`, the plugin's name as `system`, and a `source`; its entries are
+  `## <N>: <title>` headings, newest first, numbered without gaps down to
+  1; and every entry but a baseline 1 has **Detect** and **Apply** lines;
 - no plugin file names a pre-plugin skill (`relay-next`, `/relay-execute`, ...),
   except where the setup skill describes the upgrade from them.
 
@@ -30,6 +35,7 @@ SEMVER = re.compile(r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$")
 SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SKILL_REF = re.compile(r"\brelay:([a-z0-9-]+)")
 TEMPLATE_REF = re.compile(r"`(templates/[^`\s]+)`")
+MIGRATION_HEADING = re.compile(r"^## (\d+): \S")
 OLD_NAME = re.compile(r"/relay-[a-z]|\brelay-(?:next|execute|project|release|setup|go|plan|review)\b")
 # The setup skill names the old skills on purpose, to migrate repos off them.
 OLD_NAMES_ALLOWED = {Path("skills/setup/SKILL.md")}
@@ -60,7 +66,40 @@ def load_json(path, errors):
         return None
 
 
-def check_skills(plugin_dir, errors):
+def check_migrations(path, plugin_name, errors):
+    text = path.read_text()
+    fields = frontmatter(text)
+    if fields is None:
+        errors.append(f"{path}: no front matter")
+        return
+    if fields.get("stamp") != "1":
+        errors.append(f"{path}: front matter needs stamp: 1")
+    if fields.get("system") != plugin_name:
+        errors.append(f"{path}: system {fields.get('system')!r} isn't the plugin's name {plugin_name!r}")
+    if not fields.get("source"):
+        errors.append(f"{path}: front matter has no source")
+    entries = []
+    for line in text.splitlines():
+        if line.startswith("## "):
+            match = MIGRATION_HEADING.match(line)
+            if not match:
+                errors.append(f"{path}: {line!r} isn't a '## <N>: <title>' heading")
+                continue
+            entries.append([int(match.group(1)), ""])
+        elif entries:
+            entries[-1][1] += line + "\n"
+    numbers = [n for n, _ in entries]
+    if numbers != list(range(len(numbers), 0, -1)):
+        errors.append(f"{path}: entries are {numbers}, not newest first down to 1 without gaps")
+    for number, body in entries:
+        if number == 1 and "- **" not in body:
+            continue
+        for field in ("Detect", "Apply"):
+            if f"- **{field}:**" not in body:
+                errors.append(f"{path}: migration {number} has no **{field}:** line")
+
+
+def check_skills(plugin_dir, errors, plugin_name=None):
     skills_dir = plugin_dir / "skills"
     if not skills_dir.is_dir():
         if not (plugin_dir / "hooks" / "hooks.json").is_file():
@@ -87,6 +126,10 @@ def check_skills(plugin_dir, errors):
             errors.append(f"{skill_md}: empty description")
         elif len(description) > 1024:
             errors.append(f"{skill_md}: description is {len(description)} characters, over 1024")
+        migrations = skill / "MIGRATIONS.md"
+        if migrations.is_file():
+            check_migrations(migrations, plugin_name or plugin_dir.name, errors)
+            text += migrations.read_text()
         for ref in TEMPLATE_REF.findall(text):
             if not (skill / ref).exists():
                 errors.append(f"{skill_md}: mentions {ref}, which doesn't exist")
@@ -139,7 +182,7 @@ def check(root):
             errors.append(f"{plugin_dir}: plugin.json version {version!r} isn't SemVer")
         if manifest is not None and manifest.get(".") != version:
             errors.append(f".release-please-manifest.json has {manifest.get('.')!r}, plugin.json has {version!r}")
-        skills |= check_skills(plugin_dir, errors)
+        skills |= check_skills(plugin_dir, errors, name)
         checked.append(plugin_dir)
     # A plugin may name another's skills: relay-band runs relay:go.
     for plugin_dir in checked:
