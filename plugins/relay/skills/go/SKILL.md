@@ -1,6 +1,6 @@
 ---
 name: go
-description: Run the relay workflow's next step without having to remember which skill it is. Reads the Next block of the repo's local status file (.relay/status.md by default), checks it against the In-flight state and the remote, says what it is about to run and why, then runs that skill (relay:execute, relay:review, relay:plan, or relay:project) in this session. Asks the user when the recorded step and the repo disagree or nothing is queued, and only ever suggests relay:release. Use in a repo whose AGENTS.md has a "Relay workflow" section, for "relay:go", "go", "next step", "continue the relay", "what's next", or at the start of a fresh session in such a repo.
+description: Run the relay workflow's next step without having to remember which skill it is. Reads the Next block of the repo's local status file (.relay/status.md by default), checks it against the In-flight state and the remote, says what it is about to run and why, then runs that skill (relay:execute, relay:review, relay:plan, relay:project, or relay:quick) in this session. Asks the user when the recorded step and the repo disagree or nothing is queued, and only ever suggests relay:release. Use in a repo whose AGENTS.md has a "Relay workflow" section, for "relay:go", "go", "next step", "continue the relay", "what's next", or at the start of a fresh session in such a repo.
 ---
 
 # Run the next step
@@ -50,22 +50,25 @@ state allows:
 | `awaiting review` | `relay:review` |
 | `none`, with an active project that has delivery items not yet accepted | `relay:plan` |
 | `none`, with an active project whose items are all accepted | `relay:project` (close it) |
-| `none`, with no active project | `relay:project` or `relay:plan`, so ask |
+| `none`, with no active project | `relay:project`, `relay:plan`, or `relay:quick`, so ask |
 
 The recorded step is **consistent** when it is the allowed step, or when
-`State` is `none` and it names `relay:plan` or `relay:project` for a reason its
-`Why` line gives. It is **stale** when the remote contradicts the In-flight
+`State` is `none` and it names `relay:plan`, `relay:project`, or `relay:quick`
+for a reason its `Why` line gives. It is **stale** when the remote contradicts the In-flight
 block: the named pull request is merged or closed while the block says
-`executing` or `awaiting review`, or its branch does not exist.
+`executing` or `awaiting review`, or its branch does not exist. An open
+pull request from a `quick/*` branch is a `relay:quick` an earlier session did not
+finish: mention it, whatever runs.
 
 - **Consistent:** run it.
 - **`—`, and the table allows exactly one step:** run that step.
 - **Inconsistent, stale, or `—` with more than one step allowed:** stop and
   ask the user with the harness's structured question tool, leading with the
   step the repo state supports, and showing what the Next block says and what
-  the state says. With nothing queued, the options are `relay:project` with an
-  idea, `relay:plan` with a small already-designed fix, and, when something is
-  releasable (below), `relay:release`.
+  the state says, in plain words before skill names. With nothing queued, the
+  options are `relay:project` with an idea, `relay:quick` with a small change,
+  `relay:plan` with an already-designed fix too big for one session, and, when
+  something is releasable (below), `relay:release`.
 
 An argument given to this skill is passed on to the step it runs; when it
 names a different skill (`relay:go review`), that is the user's choice: say

@@ -1,14 +1,15 @@
 ---
 name: execute
-description: Build the chunk in flight as the relay workflow's executor. With no argument it finds the chunk named in the repo's local status file (.relay/status.md by default); with an ID it runs that chunk's brief (.relay/chunks/<ID>.md). Opens the chunk branch and a draft pull request, reads the brief's kickoff notes and the review-checklist entries they name, builds each unit with tests, runs the repo's gate, adds changelog entries where the repo keeps them, commits and pushes per unit, logs any decision the docs do not cover, writes the report into the chunk file and the pull request body, marks the pull request ready, and hands off to review. Use in a repo whose AGENTS.md has a "Relay workflow" section, for "relay:execute", "relay:execute P0002-C03", "execute the next chunk", "pick up the executor work", or "resume the chunk".
+description: Build the chunk in flight as the relay workflow's executor. With no argument it finds the chunk named in the repo's local status file (.relay/status.md by default); with an ID it runs that chunk's brief (.relay/chunks/<ID>.md). Opens the chunk branch and a draft pull request, reads the brief's kickoff notes and the review-checklist entries they name, builds each unit with tests at its boundaries, runs the repo's gate, adds changelog entries where the repo keeps them, commits and pushes per unit, asks the maintainer about any contract the docs leave open, writes the report into the chunk file and the pull request body, marks the pull request ready, and hands off to review. Use in a repo whose AGENTS.md has a "Relay workflow" section, for "relay:execute", "relay:execute P0002-C03", "execute the next chunk", "pick up the executor work", or "resume the chunk".
 ---
 
 # Execute a chunk
 
-You are the **executor**. The planner (`relay:plan`) has already made every
-design decision the brief needs and written down what to watch for. Your job is
-to build exactly what the brief says, prove it with tests, and report
-precisely.
+You are the **executor**. The planner (`relay:plan`) has settled the
+contracts the chunk touches and written down what to watch for. Your job is to
+build what the brief says, decide the details it leaves open (wording, layout,
+names, internal structure), prove the behavior with tests at its boundaries,
+and report plainly.
 
 ## Settings
 
@@ -19,7 +20,7 @@ written by `relay:setup`. If there is none, stop and suggest running
 - `<integration>` is the **Integration branch**, where chunk pull requests
   merge.
 - `<gate>` is the **Gate** command (for example `make check`), which must pass
-  before every unit commit.
+  before every unit commit. **Gate budget** is the time it should stay under.
 - **Releases** says whether the repo uses release-please, hand-cut releases,
   or neither; AGENTS.md's *Releases* section gives the details.
 - **Issues** says whether the repo tracks ideas and follow-ups as GitHub
@@ -166,15 +167,22 @@ For each remaining unit in the brief, in order:
 1. Implement it against the cited doc sections. Prefer the shape the brief
    suggests; deviate only where the brief leaves it open, and say so in the
    report.
-2. Write the tests the unit's **Done when** names, plus what a careful
-   engineer adds. A behavior the docs specify and no test pins is unfinished.
+2. Test at the boundaries: the operations the unit adds or changes, the
+   output contract a CLI or API promises, and a few end-to-end flows for
+   user-facing work, enough to cover the unit's **Done when**. Do not pin
+   every string, layout, or branch of a helper: a test that breaks when
+   wording changes guards nothing anyone relies on. Never sleep for a fixed
+   time in a test: wait for the condition or event, or drive a fake clock.
+   Fixed sleeps are how timing tests turn flaky.
 3. While the unit is coming together, check it with the narrowest thing that
    answers the question in front of you: a single test, one package's tests,
    one linter, one build. The gate is the gate, not the probe; a half-built
    unit cannot inform most of what it runs. Run it once the unit is built, and
    it must pass before you commit. Never narrow the gate itself: when CI does
    not run on drafts, this run is the only thing standing behind the commit's
-   gate line.
+   gate line. If the unit pushes the gate past **Gate budget**, make the new
+   tests cheaper (fewer cases, no real waits) before you commit; if you
+   cannot, say so in the report.
 4. **Hand-cut releases:** if the unit touched a behavior-bearing path the
    *Releases* section lists, add a `- …` line under `## [Unreleased]` in the
    changelog describing the behavior change for its readers, not the chunk
@@ -201,17 +209,22 @@ For each remaining unit in the brief, in order:
 
 ## 3. When the docs do not cover something
 
-- Add an entry to the decision log: the next unused ID, the decision, the
-  reasoning, its origin by date and pull request ("Added YYYY-MM-DD in #NN",
-  never the chunk ID: the log is tracked), and where the rule now lives.
-- Update the doc(s) that should have said it, so the next reader finds the
-  rule where they expect it.
-- Cite the decision at the code site, by its ID and the doc section, never by
-  the chunk or a checklist entry.
+- **A detail** (wording, layout, a default nobody else relies on, internal
+  structure): decide it, and list it under *Details decided* in the report.
+  It needs no decision-log entry and no doc change: the code and its tests are
+  its record.
+- **A contract or a real choice** (an interface other code relies on, a
+  stored or emitted format, a CLI's output, behavior a user would notice and
+  might want otherwise): ask the maintainer with the harness's structured
+  question tool, in terms of what they would see, leading with the option you
+  recommend. Record the answer as a decision-log entry (the next unused ID;
+  what was decided, the alternatives, and why; its origin as "Added
+  YYYY-MM-DD in #NN", never the chunk ID), update the doc that should have
+  said it, and cite the entry at the code site.
 - **Never reopen a decided entry.** If a decision looks wrong, implement it as
   written and flag it under *Doc inconsistencies* in the report. The one
-  exception is a decision that cannot be implemented as written: decide the
-  smallest thing that unblocks you, log it, and flag it prominently.
+  exception is a decision that cannot be implemented as written: ask the
+  maintainer, and flag it prominently.
 
 ## 4. Boundaries
 
@@ -237,11 +250,17 @@ Run the full verification the brief requires. Append the report below to the
 chunk file (if an earlier session left a `## Partial report`, replace it).
 Neither the report nor the status file is committed. Then, in order:
 
-1. Write the pull request body from the report
+1. Settle the follow-ups you noticed and did not do. With **Issues** on, ask
+   the maintainer once which to file (a multi-select question, each option a
+   plain sentence), file those, grouping related ones into one issue, and put
+   their numbers in the report's *Notes*. Without it, list them there;
+   `relay:review` carries them to the status file.
+2. Write the pull request body from the report
    (`gh pr edit <NN> --body-file …`). It is the chunk's only remote record, so
-   it must stand alone: what landed, what the tests pin, decisions made (by
-   decision ID), and doc inconsistencies found, with no link to or citation of
-   the chunk file, the brief, or a checklist entry.
+   it must stand alone. It opens with what changed for someone using the
+   product, in plain language; then what the tests cover, details decided,
+   decisions made (by decision ID), and doc inconsistencies found, with no
+   link to or citation of the chunk file, the brief, or a checklist entry.
    If the brief names issues the chunk resolves, the body closes them
    (`Fixes #N`). Make sure the title names what the chunk delivered, without
    the chunk ID: it becomes the squash commit's subject on `<integration>`.
@@ -251,23 +270,24 @@ Neither the report nor the status file is committed. Then, in order:
    `fix!: …` for a breaking change. A chunk with no
    user-visible effect is `refactor:`, `test:`, `docs:`, or `chore:`, and
    releases nothing on its own.
-2. `gh pr ready <NN>`. In the status file, set `State` to `awaiting review`
+3. `gh pr ready <NN>`. In the status file, set `State` to `awaiting review`
    and the pull request's `(draft)` to `(ready)`, leaving `Branch` and
    `Pull request` in place.
-3. If the repo has CI, wait for the pull request's run
+4. If the repo has CI, wait for the pull request's run
    (`gh pr checks <NN> --watch`), in this turn rather than in the background:
    the handoff is not complete until the head commit is green, and a race the
    unit runs passed by luck can still fail here.
    If it is red, re-run it once (`gh run rerun <id> --failed`); a pass names a
    flake, with the failing test and the run id, under the report's *Notes*. A
-   second red is fixed as its own commit, said so under *Notes* (in the chunk
-   file and the pull request body), and waited on again.
-4. Only now, with the head green, set the **Next** block to `relay:review`,
+   flake in a test this chunk wrote is fixed now, by removing its dependence
+   on timing, not by loosening a timeout. A second red is fixed as its own
+   commit, said so under *Notes* (in the chunk file and the pull request
+   body), and waited on again.
+5. Only now, with the head green, set the **Next** block to `relay:review`,
    its Why naming the chunk and its pull request. A queued step says this
    session is done, so it must not be written while CI can still send the
    chunk back.
-5. Print the same report in chat and close with: *"In a fresh session at this
-   repo, run `relay:go` (next: `relay:review`)."*
+6. End with the hand-off below.
 
 ```markdown
 ## Report
@@ -276,32 +296,49 @@ Neither the report nor the status file is committed. Then, in order:
 <unit>, <sha> <unit>, …
 <If resumed: "Resumed at unit <x>; units <…> were committed by an earlier session.">
 
-### What landed
-One paragraph per unit: what exists now (modules, public API, behaviors).
-Note any deviation from the brief and why.
+### What changed
+A few plain sentences: what someone using the product can now do, or what
+works differently. Then one short paragraph per unit on what exists now, and
+any deviation from the brief and why.
 
-### Verified by tests
-Counts per package or module, and for each unit the specific guarantees the
-tests pin (what would fail if the rule were broken). Name any mutation checks
-you ran.
+### Tested
+Which boundaries the tests cover (operations, output contracts, end-to-end
+flows), and how long the gate now takes.
+
+### Details decided
+What the brief left open and you chose: wording, layout, defaults, structure.
+"None" if none.
 
 ### Decisions made
 One line per decision-log entry added: ID — the decision — why. "None" if none.
 
 ### Doc inconsistencies found
-Each with: what disagrees with what, what you did (implemented as written /
-fixed the doc / logged a decision), and what the reviewer should look at.
+Each with: what disagrees with what, what you did, and what the reviewer
+should look at. "None" if none.
 
 ### Notes
-Environment changes (tools installed), follow-ups you did not do, anything
-unfinished, anything the planner should schedule. With **Issues** on, file each
-follow-up as an issue and list its number here.
+Environment changes, flakes, anything unfinished, and follow-ups you noticed
+and did not do.
 ```
 
 A rework (§0) appends `### Rework` below *Notes* rather than rewriting any of
 the above.
 
-Be exact and verifiable: SHAs, counts, file paths, section numbers. The
-reviewer (`relay:review`) spot-checks claims against the code, reviews the
-pull request on its branch, and performs the squash-merge into
-`<integration>`.
+Be exact where it is checkable (SHAs, file paths, section numbers) and brief
+everywhere else. The reviewer (`relay:review`) spot-checks claims against the
+code, reviews the pull request on its branch, and performs the squash-merge
+into `<integration>`.
+
+### Hand-off
+
+End with a few plain lines for the maintainer, before any IDs:
+
+- **What changed:** the report's first sentences, in a user's terms.
+- **Worth trying:** if the branch is worth trying before review, the command
+  or action that shows it; otherwise "after it merges".
+- **Next:** that the chunk waits for review, and anything waiting on the
+  maintainer.
+
+Then one line of references: the chunk ID, the pull request, any decision
+IDs and issues filed. Close with: *"In a fresh
+session at this repo, run `relay:go` (next: `relay:review`)."*

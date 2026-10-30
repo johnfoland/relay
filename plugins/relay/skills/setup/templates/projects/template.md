@@ -20,9 +20,11 @@ compatibility constraints, preserved behavior, and migration boundaries.
 
 ## 3. Design questions
 
-Every row is a place two reasonable implementations could disagree. A resolved
-row points to the authoritative section where the answer graduated, and to its
-decision-log entry when one was required.
+Every row is a contract the project creates or changes, or a choice with
+real trade-offs for the maintainer. Wording, layout, and internal structure
+are not questions: the executor decides them. A resolved row points to the
+authoritative section where the answer graduated, and to its decision-log
+entry when one was required.
 
 | Question | Resolution | Authority / decision | State |
 |---|---|---|---|

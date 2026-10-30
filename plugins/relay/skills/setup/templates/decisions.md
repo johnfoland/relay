@@ -3,11 +3,15 @@
 Settled questions, so they aren't reopened by accident. Each entry says what
 was decided and why, and is cited from the docs and the code as `(DEC-n)`.
 
+- An entry is a choice that had real alternatives and that the maintainer
+  ruled on. Implementation details (wording, layout, internal structure) are
+  not entries: the code and its tests record them.
 - Add new entries at the end, numbered one past the greatest existing ID,
   with the month they were settled.
 - To change one, discuss it first, then edit the entry in place (don't delete
-  it): say what replaced it, when, and why, and update every doc and code site
-  that cites it. Never give a changed decision a new ID.
+  it) and add one line: "Changed YYYY-MM: … because …". Update every doc and
+  code site that cites it. Never give a changed decision a new ID, and never
+  append "clarified" paragraphs: if the wording was unclear, fix the wording.
 
 Each entry has this shape:
 

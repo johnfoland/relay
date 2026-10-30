@@ -1,24 +1,25 @@
 # Status
 
 Last updated <YYYY-MM-DD> by `relay:setup`.
-Last review: none yet.
 
-## Where this stands
+This file holds the current state and the next step, not history: git, the
+pull requests, and the project ledgers hold that. Every relay skill rewrites
+*Now* rather than appending to it. Keep the file under 40 lines.
 
-- The relay workflow was set up on <YYYY-MM-DD>. No project is active and no
-  chunk is in flight.
+## Now
+
+- No project is active and no chunk is in flight.
 
 ## Next
 
 - **Run:** —
 - **Why:** nothing is queued yet: `relay:project <idea>` shapes the first
-  project, or `relay:plan` with a small, already-designed fix cuts one chunk.
+  project, and `relay:quick` makes a small change in one session.
 - **Set by:** `relay:setup`, <YYYY-MM-DD>
 
 (Fixed shape. `Run` is the one skill a fresh session's `relay:go` runs,
 optionally with an argument, or `—` when nothing is queued; `Why` says why in
-one line; `Set by` names the skill and date. Every relay skill rewrites this
-block as it finishes.)
+one line; `Set by` names the skill and date.)
 
 ## In flight
 
@@ -29,20 +30,10 @@ block as it finishes.)
 - **Units committed:** —
 
 (Fixed shape. `State` ∈ `ready for an executor` · `executing` ·
-`awaiting review` · `none`; `Branch`, `Pull request`, and `Units committed` are
-`—` until set; the pull request carries `(draft)` or `(ready)`.
-`relay:execute` creates `chunk/<id>` from the integration branch, opens a
-draft pull request, sets `executing`, updates `Units committed` per unit, and
-sets `awaiting review` when its report lands; `relay:review` reviews that pull
-request on its branch and squash-merges accepted work; `relay:plan` cuts the
-next chunk. This file is local and git-ignored: there is one copy, whatever
-branch is checked out, and every relay skill edits it in place without
-committing it.)
+`awaiting review` · `none`; the other lines are `—` until set, and the pull
+request carries `(draft)` or `(ready)`. This file is local and git-ignored:
+one copy whatever branch is checked out, edited in place, never committed.)
 
-## Follow-ups not yet scheduled
+## Follow-ups
 
 None.
-
-## Decisions by chunk
-
-None yet. One line per chunk: the decision-log IDs it added.

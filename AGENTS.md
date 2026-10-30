@@ -4,10 +4,10 @@ Instructions for coding agents. Codex reads this file; Claude Code reads it
 through `CLAUDE.md`'s `@AGENTS.md` import.
 
 relay is a plugin for Claude Code and Codex that runs a planner/executor
-workflow: the skills in `plugins/relay/skills/` (`go`, `project`, `plan`,
-`execute`, `review`, `release`, `setup`) hand work between fresh agent sessions
-through local process files and pull requests. The product is the skills'
-text and the templates `setup` copies into other repositories. README.md
+workflow: the skills in `plugins/relay/skills/` (`go`, `project`, `quick`,
+`plan`, `execute`, `review`, `release`, `setup`) hand work between fresh agent
+sessions through local process files and pull requests. The product is the
+skills' text and the templates `setup` copies into other repositories. README.md
 covers installing and using it; `docs/decisions.md` records why it is shaped
 the way it is.
 
@@ -111,6 +111,15 @@ The roadmap is the issue list on `johnfoland/relay`. Keep it current:
   (CI, a merge) can still change the step: the band offers `/clear` as soon as
   the block changes (DEC-7). `relay:go`'s §2 table and the skills that write
   the block must agree (DEC-3).
+- **Contracts, not specs.** What the skills ask for stays small: design docs
+  hold contracts and real choices, small changes take one `relay:quick`
+  session, tests sit at boundaries, and the status file holds only the
+  current state (DEC-8 to DEC-11). Don't add a step, a document section, or a
+  default check without weighing what it costs every session.
+- **Plain hand-offs.** Every skill ends with a few plain lines for the
+  maintainer (what changed, what is worth trying, what is next), then the
+  project map while a project is active, IDs last, and asks the maintainer
+  about outcomes, not internals (DEC-12).
 - **Old names live only in `setup`.** `setup`'s migration text is the one place
   that names the pre-plugin `relay-*` skills; `tools/check.py` fails on them
   anywhere else.

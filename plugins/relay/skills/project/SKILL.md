@@ -1,16 +1,19 @@
 ---
 name: project
-description: Shape work in a relay-workflow repo from an idea into settled design and an active project that relay:plan can cut into chunks, change settled design when the user asks for a design change, and close or abandon projects when their work is done. Use in a repo whose AGENTS.md has a "Relay workflow" section, for "relay:project", "start a project", "design this feature", "design change: …", "resume the active project", "activate P0002", "close the project", or when an idea spans more than one already-decided chunk. Not for a self-contained fix whose design is already settled and which fits one chunk; relay:plan cuts that directly.
+description: Shape work in a relay-workflow repo from an idea into settled design and an active project that relay:plan can cut into chunks, change settled design when the user asks for a design change, and close or abandon projects when their work is done. Use in a repo whose AGENTS.md has a "Relay workflow" section, for "relay:project", "start a project", "design this feature", "design change: …", "resume the active project", "activate P0002", "close the project", or when an idea spans more than one already-decided chunk. Not for a small change whose design is already settled; relay:quick makes that in one session.
 ---
 
 # Design and run a project
 
 You are the **project designer**. A project closes the gap between an idea and
-the source material `relay:plan` needs: it settles the design in the
-authoritative docs, records decisions in the decision log, and leaves an
-ordered delivery plan with testable completion criteria. You do not write
-product code and you do not cut chunk briefs; `relay:plan` and
-`relay:execute` keep those jobs.
+the source material `relay:plan` needs: it settles the contracts and the real
+choices in the authoritative docs, records the maintainer's rulings in the
+decision log, and leaves an ordered delivery plan with testable completion
+criteria. Design docs hold contracts, not specs: what other code, stored data,
+and users rely on, and the choices that had trade-offs. Wording, layout, and
+internal structure are left to the executor, and the code and its tests are
+their record. You do not write product code and you do not cut chunk briefs;
+`relay:plan` and `relay:execute` keep those jobs.
 
 ## Settings
 
@@ -66,16 +69,17 @@ Open a project when the work has at least one of these properties: it needs two
 or more independently reviewable chunks; it has design questions whose answers
 must land in more than one authority doc; or it changes a behavior, contract,
 or subsystem boundary that must be settled before an executor can work safely.
-The ceremony prevents three concrete failures: design being invented inside a
-chunk, dependent chunks disagreeing about the same rule, and the intended
-outcome disappearing behind a sequence of implementation tasks.
+The ceremony prevents three concrete failures: a contract being invented
+inside a chunk, dependent chunks disagreeing about the same rule, and the
+intended outcome disappearing behind a sequence of implementation tasks.
 
 Do **not** open one for a docs-only correction or for a self-contained,
-already-designed fix that fits one focused chunk. Hand the latter to
-`relay:plan` as a standalone maintenance chunk: set the **Next** block to
-`relay:plan`, its Why naming the fix. If scoping reveals a real
-design choice or a second chunk, promote it to a project before code begins. Do
-not create a placeholder project merely to reserve an ID.
+already-designed change. Hand one that one session can finish to
+`relay:quick`, and one that needs a fuller chunk to `relay:plan` as a
+standalone maintenance chunk: set the **Next** block to that skill, its Why naming the fix. If
+scoping reveals a real design choice or a second chunk, promote it to a
+project before code begins. Do not create a placeholder project merely to
+reserve an ID.
 
 ## B. Start or resume
 
@@ -100,10 +104,16 @@ that the newest file is the intended one.
 
 ## C. Settle the design
 
-1. Turn every point an executor could reasonably implement two ways into a row
-   in the project's **Design questions** table. Include ordering, data shape,
-   defaults and validation, error and failure behavior, compatibility with
-   existing users, data, and interfaces, and migration of existing state.
+1. List the project's **Design questions**: the contracts it creates or
+   changes (interfaces other code calls, data shapes stored or emitted, a
+   CLI's output, failure behavior a user sees, compatibility with existing
+   users and data, migration of existing state) and the choices with real
+   trade-offs. Not every point two executors could build differently is a
+   question: exact UI text, layout, key bindings, cursor behavior, and
+   internal structure are details, and the executor decides them. Ask the
+   maintainer about each real choice with the harness's structured question
+   tool, framed as what they would see or what it would cost them, never in
+   the code's internal terms. Lead with the option you recommend.
 2. Resolve each question against the existing authority. A project record may
    hold investigation, alternatives, evidence, and the delivery plan, but it
    is **not** an authority for product behavior. Put a durable rule in the
@@ -123,9 +133,10 @@ that the newest file is the intended one.
    the project ID: the log is tracked. Update every doc
    that should carry the rule, and cite the decision there. For an
    intentional change to a decided entry, follow the decision log's reopening
-   procedure; never allocate a replacement ID to disguise it. Purely local
-   organization with no durable rule stays in the project record and needs no
-   entry.
+   procedure: a short "Changed YYYY-MM-DD: … because …" note, never a
+   replacement ID. An entry is only a choice that had real alternatives and
+   that the maintainer ruled on; a detail, or a clarification of an existing
+   entry, is not one. Purely local organization stays in the project record.
 4. Fill **Authority changes** with the exact sections that now contain the
    design and why each changed. A `ready` project has no implementation rule
    that exists only in its own file.
@@ -137,9 +148,15 @@ that the newest file is the intended one.
    item.
 6. Change `shaping` to `ready` only when every design question is resolved,
    every answer has graduated to authority, the delivery plan covers the
-   outcome and completion criteria, and an executor would need to invent no
-   rule. Record the readiness date and the decision-log range added, or
-   `none`.
+   outcome and completion criteria, and no contract or real choice is left
+   for an executor to invent. Details are not a reason to stay in `shaping`.
+   Record the readiness date and the decision-log range added, or `none`.
+7. Keep the docs to their job. A section that reads like a spec (exact
+   strings, screen layouts, step-by-step UI behavior) is the code's job;
+   state the contract it serves in a sentence or two instead. When a
+   delivery-stage plan in a design doc is finished, fold the contracts it
+   settled into the doc that describes current behavior and remove the
+   plan.
 
 ## D. Activate and hand off
 
@@ -214,19 +231,22 @@ made inside a chunk.
 1. Decide the scope. A change whose code migration fits one focused chunk is
    handled here directly; one that needs several chunks, or opens design
    questions of its own, becomes a project (§B) whose problem is the change.
+   A change to a detail (wording, layout) is not a design change: it is a
+   `relay:quick`.
 2. Edit the authority docs first. Add or amend decision-log entries, following
-   the log's reopening procedure for a decided entry: keep IDs stable, mark
-   the change, and never allocate a replacement ID to disguise it. Update every
+   the log's reopening procedure for a decided entry: keep IDs stable, add a
+   short "Changed YYYY-MM-DD: … because …" note, and never allocate a
+   replacement ID to disguise it. Update every
    doc that cites the changed rule; grep for the claim, not just the doc's
    name.
 3. Schedule the code migration. With an active project the change belongs to,
    add it to that project's delivery plan, and record the changed sections in
-   its *Authority changes* table. Otherwise it is a standalone maintenance
-   chunk for `relay:plan`, whose brief cites the changed sections. If the
-   change alters recorded outputs (golden files, snapshots, fixtures), the
-   migration unit regenerates them and its commit explains the diff.
+   its *Authority changes* table. Otherwise it goes to `relay:quick`, or to
+   `relay:plan` as a maintenance chunk when one session cannot finish it. If
+   the change alters recorded outputs (golden files, snapshots, fixtures), the
+   migration regenerates them and its commit explains the diff.
 4. Land the doc changes as **Ending the session** describes, and set the
-   **Next** block to `relay:plan`, its Why naming the change to migrate,
+   **Next** block to that skill, its Why naming the change to migrate,
    unless a chunk is in flight: then leave **Next** as it is and add the
    migration to the status file's follow-ups, so it is cut after the open
    chunk is reviewed.
@@ -243,7 +263,25 @@ the diff, and squash-merge it. A session that changed only the project file
 and the index has nothing to commit. Write the **Next** block last, once that
 pull request has merged: a queued step says this session is done.
 
-Report the project ID and state, the design decisions and decision-log entries
-that landed, the authority sections changed, the next delivery item, and any
-deliberate exclusion. Close with: *"In a fresh session at this repo, run
-`relay:go` (next: `<the Next block's Run>`)."*
+### Hand-off
+
+End with a few plain lines for the maintainer, before any IDs:
+
+- **What changed:** what the project will let someone using the product do,
+  and the choices the maintainer made, in their terms.
+- **Worth trying:** nothing until a chunk lands, unless closing the project
+  did; then say what the finished project lets them do and how to see it.
+- **Next:** what runs next and anything waiting on the maintainer.
+
+After those lines, when a project is active or this session activated or closed one, give the **project
+map**: a table with one row per delivery item in its delivery plan, columns
+`Item`, `What it is`, and `State`. *What it is* describes the item in plain
+words, from the delivery plan; *State* is done, in progress (ready to build,
+being built, or awaiting review), or not started, from the chunk ledger and
+the In-flight block. Bold the row this session worked on. Skip the map when
+there is no active project.
+
+Then one line of references: the project ID and state, the decision IDs and
+authority sections that changed, the planning pull request. Close with: *"In a
+fresh session at this repo, run `relay:go` (next: `<the Next block's
+Run>`)."*

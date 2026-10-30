@@ -262,7 +262,12 @@ change a branch in the hope that a workflow tied to the old tag will see it.
 
 Update the status file with the release if the repo records releases there;
 it is local, so this needs no pull request. Leave its **Next** block as it
-is: a release does not change what the relay builds next. Report the version and why, the pull
+is: a release does not change what the relay builds next.
+
+End with a few plain lines for the maintainer, before any IDs: what users of
+this version get that the last one lacked, in their terms; how to get it (the
+install or upgrade command); and anything waiting on the maintainer. Then the
+references: the version and why, the pull
 requests involved (preparation and release for hand-cut, the release pull
 request and any commit overrides for release-please), the release commit and
 tag, the workflow run URL if any, published assets or registry versions and the

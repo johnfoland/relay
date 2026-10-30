@@ -11,19 +11,25 @@ conversation's memory.
 
 ## How it works
 
-Work is cut into **chunks**: small, fully specified briefs that one session
-builds and another reviews. Six skills run the cycle, and a seventh runs
-whichever comes next:
+Larger work is cut into **chunks**: short briefs that one session builds and
+another reviews. A small change takes one session instead. Design docs hold
+the contracts and the choices the maintainer made, not specs: wording,
+layout, and internal structure are left to the session that builds them, and
+the code and its tests are their record. Every step ends with a few plain
+lines for the maintainer (what changed, what is worth trying, what is next)
+and, during a project, a map of its steps and where each stands.
+Seven skills run the work, and an eighth runs whichever comes next:
 
 | Skill | What it does |
 |---|---|
 | `relay:go` | Reads the status file and runs the next step. Start every fresh session with it. |
 | `relay:project` | Shapes an idea into settled design and an ordered delivery plan; makes design changes; closes projects. |
-| `relay:plan` | Cuts the next chunk brief, pinning every decision an executor would otherwise have to make. |
-| `relay:execute` | Builds the brief unit by unit, with tests, on its own branch and draft pull request. |
-| `relay:review` | Reviews the chunk against the design docs and a growing checklist, then sends it back or merges it. |
+| `relay:quick` | Makes a small change in one session: builds it, opens the pull request, and merges it once CI is green. A risky change (stored data, job handling, work in progress) goes to `relay:review` instead. |
+| `relay:plan` | Cuts the next chunk brief: the contracts the chunk must meet, not the details. |
+| `relay:execute` | Builds the brief unit by unit, with tests at its boundaries, on its own branch and draft pull request. |
+| `relay:review` | Reviews the chunk against the design docs and a short checklist, then sends it back or merges it. |
 | `relay:release` | Cuts a version, by hand from the changelog or through release-please. `relay:go` only ever suggests it. |
-| `relay:setup` | Adds the workflow to a repository, or updates it. |
+| `relay:setup` | Adds the workflow to a repository, updates it, or prunes docs that have grown into specs. |
 
 In Claude Code a skill runs as `/relay:<skill>`; in Codex, as
 `$relay:<skill>`.
@@ -75,6 +81,7 @@ that imports it, and a decision log if the repository has none) and the local
 
 ```text
 /relay:project add an export command that writes CSV
+/relay:quick the export drops the header row when the table is empty
 ```
 
 From then on, open a fresh session for each step and run `/relay:go` (or
