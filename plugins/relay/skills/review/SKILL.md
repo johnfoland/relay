@@ -1,6 +1,6 @@
 ---
 name: review
-description: Reviewer for the relay workflow. In a fresh session it reads the repo's local status file (.relay/status.md by default), reviews the pull request of the chunk awaiting review against the design docs and the review checklist, verifies the gate and CI evidence, records the review in the chunk file and on the pull request, fixes docs, and either sends the chunk back for rework or squash-merges it, updates the project's chunk ledger, keeps any tool or checklist entry the review earned, and tells the user in plain language what the chunk made newly worth trying. Use in a repo whose AGENTS.md has a "Relay workflow" section, for "relay:review", "review the executor's work", "review the chunk", or "re-review the rework".
+description: Reviewer for the relay workflow. In a fresh session it reads the repo's local status file (.relay/status.md by default), reviews the pull request of the chunk (or risky quick change) awaiting review against the design docs and the review checklist, verifies the gate and CI evidence, records the review in the chunk file and on the pull request, fixes docs, and either sends the chunk back for rework or squash-merges it, updates the project's chunk ledger, keeps any tool or checklist entry the review earned, and tells the user in plain language what the chunk made newly worth trying. Use in a repo whose AGENTS.md has a "Relay workflow" section, for "relay:review", "review the executor's work", "review the chunk", or "re-review the rework".
 ---
 
 # Review the chunk in flight
@@ -26,14 +26,16 @@ written by `relay:setup`. If there is none, stop and suggest running
 - `<integration>` is the **Integration branch**, where chunk and planning pull
   requests merge.
 - `<gate>` is the **Gate** command, which must pass before every unit commit.
+  **Gate budget** is the time it should stay under.
 - **Authority** lists the docs that define the product's behavior, in order.
   You cite them by section.
 - **Review extras** lists repo-specific checks every review runs, if any.
 - **Releases** says whether the repo uses release-please, hand-cut releases,
   or neither; AGENTS.md's *Releases* section gives the details.
 - **Issues** says whether the repo tracks ideas and follow-ups as GitHub
-  issues. With it on, "file a follow-up" below means an issue, labelled as the
-  *Roadmap* section describes, rather than a line in the status file.
+  issues. With it on, a follow-up becomes an issue, labelled as the *Roadmap*
+  section describes, once the maintainer agrees to file it (see **Ending the
+  session**); without it, a line in the status file.
 - The status file, chunk briefs, decision log, checklists, projects, and tools
   are written at their default paths: `.relay/status.md`,
   `.relay/chunks/<ID>.md`, `docs/decisions.md` (entries cited as `DEC-n`),
@@ -86,10 +88,13 @@ file names.
 
 ## A. Review
 
-Read the chunk file's brief and report. On a re-review after a **rework**
-verdict, read its `### Rework` too: the steps below then run over the rework
-diff (`git diff <last reviewed head>...<branch>`) against the blocking
-findings, and over the rest of the chunk only where the rework touched it.
+Read the chunk file's brief and report. A risky change from `relay:quick` has no
+brief, only a goal, a *Why risky* line, and its report: review it against
+those and the docs, and look hardest at what made it risky. On a re-review
+after a **rework** verdict, read its `### Rework` too: the steps below then
+run over the rework diff (`git diff <last reviewed head>...<branch>`) against
+the blocking findings, and over the rest of the chunk only where the rework
+touched it.
 Then:
 
 1. **Verify the ground truth.** Check out the chunk's `chunk/<id>` branch.
@@ -101,15 +106,9 @@ Then:
    `gh run list --branch <branch>` and confirm its `headSha` with
    `gh run view`. A unit's own evidence is the `<gate>: green` line in its
    commit message. Check that every unit and rework commit carries it
-   (`git log --format='%h %s%n%b' <integration>..<branch>`), and walk the CI
-   runs that do exist (`gh run list --branch <branch>`), confirming each was
-   green before the next commit landed on top of it. A unit commit without the
-   line is a finding. A chunk branch that went red at any point and carried on
-   is a violation even once it is green again. The lifecycle names the commits
-   a branch should carry (an empty `open chunk`, one per unit, and any red-fix
-   or rework; the report and the status file are never committed), so
-   compare that list with `git log <integration>..<branch>`; a stray
-   bookkeeping commit is a note, not a finding.
+   (`git log --format='%h %s%n%b' <integration>..<branch>`); a commit without
+   it is a finding. Note how long the gate took: over **Gate budget** is a
+   finding.
 2. **Read every non-test source file in the diff, in full.** Skim the tests
    for the report's claims and spot-check two or three by reading the test
    body. Run anything cheap that would falsify a claim (a single target, a
@@ -119,15 +118,22 @@ Then:
 3. **Per unit, check against the docs:** does the code do what the cited
    sections say (ordering, formulas, validation, error behavior, the
    contracts other code relies on)? Does a test pin each *Done when* item? Run
-   every check **Review extras** lists. Then take the whole chunk diff through
+   every check **Review extras** lists. Check the tests sit at the
+   boundaries (operations, output contracts, a few end-to-end flows) and
+   that none sleeps for a fixed time; a batch of tests pinning wording,
+   layout, or helper branches is a finding, since it slows the gate and
+   breaks on harmless changes. Then take the whole chunk diff through
    **every entry in the review checklist**: the catalogue of bug shapes a past
    review missed at least once, each with the finding that put it there. A
    finding that matches an entry cites it as `review-checklist §N`. When this
    review turns up a new *class* of bug rather than an instance, §C.3 says to
    add it there.
-4. **Decisions:** every new decision-log entry is well formed, the citing
-   docs were updated (executors often skip this, so fix it yourself), the code
-   cites it, and nothing reopened a decided entry. In a table-format log, a new
+4. **Decisions:** every new decision-log entry records a choice with real
+   alternatives that the maintainer ruled on; an entry for a detail, or a
+   "clarified" add-on to an old entry, is a finding (move the detail to the
+   pull request body). Each entry is well formed, the citing docs were
+   updated (executors often skip this, so fix it yourself), the code cites
+   it, and nothing reopened a decided entry. In a table-format log, a new
    row goes *inside* the table: a blank line before it silently ends the table
    and orphans the row. The same applies to a **rule doc edited without a
    decision entry**. Grep for the claim that changed, not just for the doc's
@@ -146,10 +152,9 @@ Then:
    review that accepts the new step. No new line in a tracked file cites a
    chunk ID, the brief, a review finding, or a checklist entry; the decision
    log names an entry's origin by date and pull request.
-6. **Report accuracy:** are the counts and claims true? Note any that are not.
-   A test the report calls flaky, however it explains it, is run again many
-   times (forty is a good default) before it is accepted as noise: a failure
-   blamed on timing is often a real race.
+6. **Report accuracy:** are the claims true? Note any that are not. A test
+   the report calls flaky is a finding, not noise: if it waits on time
+   rather than on a condition, the fix is to make it wait on the condition.
 7. **Read the report's *Doc inconsistencies found* as a finding source, not as
    noise.** An executor that implemented the doc rather than the brief, and
    said so, is usually right, and what it found is the planner's error, made
@@ -158,11 +163,22 @@ Then:
    review which one it was. When the thing that was wrong is the brief, §C.3
    routes the class to the brief checklist.
 
+Do not add extras by default: no mutation runs, no re-running the suite many
+times or under load, no proving that the old code fails the new tests. Reach
+for one only when a specific finding needs it to be settled, and say which.
+
+Settle the follow-ups, the review's and any the report left unfiled. With
+**Issues** on, ask the maintainer once which to file (a multi-select
+question, each option a plain sentence), and file those, grouping related
+ones into one issue; the rest are dropped unless the maintainer wants them on
+the status file's list. Without it, they go on that list.
+
 Write `## Review` into the chunk file. Then post it on the pull request
 (`gh pr comment <NN> --body-file …`): that copy is the review's only remote
-record, so it describes each finding in full and drops the chunk-file
-references and checklist entry numbers. With **Issues** on, follow-ups are
-issues and both copies give their numbers.
+record, so it opens with a plain sentence or two on what the chunk does for
+someone using the product, describes each finding in full, and drops the
+chunk-file references and checklist entry numbers. With **Issues** on, both
+copies give the numbers of the follow-ups filed.
 
 ```markdown
 ## Review
@@ -174,8 +190,8 @@ Verified: <what you ran and read>.
 Numbered. Each: what, where (file:line or section, and the
 `review-checklist §N` entry if it matches one), severity (blocking /
 follow-up / note), and what happens to it (fixed in this review /
-scheduled as <chunk>-<unit> / filed as a follow-up: a status-file line, or
-issue #N).
+scheduled as <chunk>-<unit> / a follow-up: a status-file line, or issue #N
+once filed).
 
 ### Doc fixes made in this review
 Bullets, or "none".
@@ -196,8 +212,8 @@ will pin it. `relay:execute` commits them as `<ID>-rework`, appends
 repeats on the rework diff. Set the **Next** block to `relay:execute`, its Why
 naming the chunk and the number of blocking findings.
 
-**Accept, or accept with follow-ups.** Fix doc inconsistencies directly; file
-required **code** fixes as follow-ups. Run **C**, and commit what it and the
+**Accept, or accept with follow-ups.** Fix doc inconsistencies directly;
+required **code** fixes are follow-ups. Run **C**, and commit what it and the
 doc fixes changed in tracked files as `Review <ID>`, and push; with nothing
 tracked changed there is no commit. Wait for the branch's CI on its head
 (`gh pr checks <NN> --watch`), check that the pull request's title names what
@@ -208,17 +224,20 @@ of a few lines on what the chunk delivered, plus any `Fixes #N` or
 `BREAKING CHANGE:` footer the pull request carries: GitHub's default body
 lists the unit commits, whose titles carry the chunk ID. The run must be green
 on the exact head you merge, not merely once: a race can pass one run and
-fail the next. A red run you re-ran to green is a flake; file it as a
+fail the next. A red run you re-ran to green is a flake; make it a
 follow-up so the next chunk can fix it. Then
 `git checkout <integration> && git pull --ff-only`, and update the active
 project's chunk ledger with the reviewed state, the pull-request number, and
-the squash SHA on `<integration>` (`git log <integration> --oneline`).
+the squash SHA on `<integration>` (`git log <integration> --oneline`). A change
+from `relay:quick` has no ledger row.
 
 Set the **In flight** block to `State: none`, with `Chunk`, `Branch`,
 `Pull request`, and `Units committed` all `—`. Then set the **Next** block:
 
 - `relay:plan` when the active project has delivery items no accepted chunk
   covers yet, or a follow-up from this review is due as the next chunk;
+- `relay:quick <the follow-up>` when there is no active project and a
+  follow-up one session can finish should come next;
 - `relay:project` when the active project's last delivery item has just been
   accepted, so it can audit and close the project instead of anyone cutting
   an empty chunk;
@@ -229,102 +248,57 @@ Do not cut the next chunk yourself.
 
 ## C. Keep what outlives the session
 
-Before you finish, ask what this session built or learned that the next one
-would otherwise rebuild or rediscover. Three kinds, in order of how often they
-come up:
+Ask what this session learned that the next one would otherwise rediscover.
+Usually the answer is nothing; say so in the review either way.
 
-1. **A verification tool.** If you wrote a throwaway script to check a claim
-   (an oracle that recomputes a formula from the doc, a log analyzer, a corpus
-   sweep) and it would answer the same question next chunk, it is not
-   throwaway. Move it to `tools/`, one file per tool, named for what it checks.
-   Its docstring says what it verifies, **what it does not**, how to run it,
-   and why it is not in the gate. Two rules earn it its keep:
-   - **It must fail loudly on anything it does not model**, never skip. A tool
-     that silently ignores what a later change added reports "ok" while
-     checking nothing, which is worse than no tool. That also forces the next
-     change to extend it before relying on it.
-   - **Prove it catches something.** Mutate a fixture or recorded output,
-     confirm the tool fails and exits non-zero, then throw the mutation away. A
-     checker that has only ever said "ok" has not been tested.
-
-   Keep a tool only if it is genuinely re-runnable (no state hard-coded to this
-   chunk) and it earned its keep this session. A script that found nothing and
-   would be rewritten from scratch next time is still scratch. Record a new tool
-   wherever the repo describes its layout.
-
-2. **AGENTS.md and the relay skills.** If AGENTS.md was wrong, missing
-   something, or led you into the wrong move, fix it now while you remember
-   what it cost. If a relay skill itself did, do not edit an installed copy:
-   it is shared across repos. Tell the user in the handoff what should change
-   and why, and meanwhile record any repo-specific rule in AGENTS.md.
-
+1. **A verification tool.** A script you wrote to check a claim that would
+   answer the same question next chunk goes to `tools/`, one file per tool.
+   Its docstring says what it checks, what it does not, and how to run it. It
+   fails loudly on anything it does not model, rather than skipping it.
+2. **AGENTS.md and the relay skills.** If AGENTS.md was wrong or missing
+   something, fix it now. If a relay skill was, do not edit an installed copy:
+   tell the user in the hand-off what should change and why.
 3. **The two checklists.** When a finding is a *class* rather than an
-   instance, add it as the next numbered entry, with the finding that revealed
-   it (the provenance is the evidence the shape is real), so the next session
-   looks for it by default. Which file depends on where the mistake was made,
-   not on who found it:
-   - the *code* was wrong ("the service trusts a client-supplied ID", "a helper
-     returns a slice its callers will misread") → the review checklist.
-   - the *brief* was wrong (a decision that reached no unit, an instruction that
-     contradicted itself, a *Tests* line that invented a condition) → the brief
-     checklist. This is the planner's error, made when the chunk was cut, and
-     it is the one an executor could not have caught.
-
-   Do not renumber or prune existing entries in either file. Before adding a
-   new entry, sweep the file or test its finding came from for other
-   instances of the shape, and schedule each one you find: a shape found once
-   in a file is often there twice.
-
-None of this is mandatory: most sessions produce nothing worth keeping, and
-"nothing this time" is a fine answer. Say which in the review either way, so
-the next session knows the question was asked.
-
-**Extend a tool from the doc, not from the code.** The temptation at every
-under-specified point is to encode what the code happens to do, which turns an
-oracle into a mirror. Where the doc admits several answers (any ordering of a
-tie, say), enumerate them and accept a match against any one, and say so in
-the docstring. Then mutate a fixture at *each* newly modelled point, not just
-one, and check the exit code each time.
+   instance, and it cost something real (a bug that reached users, a rework),
+   add it in two or three lines: the shape to look for, and the finding that
+   revealed it. A *code* mistake goes in the review checklist; a mistake in
+   the *brief* (a decision that reached no unit, an instruction that
+   contradicted itself) goes in the brief checklist. Keep each file under
+   twenty entries: when one is full, merge similar entries or retire one the
+   gate or a test now catches, leaving its number unused.
 
 ## Ending the session
 
 The status file must let a fresh session resume with nothing but
-`relay:go`: the active project's chunk ledger, the In-flight and Next blocks
-in their exact shapes, open follow-ups (or, with **Issues** on, a pointer to
-them), and this review's date on the *Last review* line. Push and complete any
+`relay:go`: the In-flight and Next blocks in their exact shapes, the active
+project's chunk ledger, and open follow-ups (or, with **Issues** on, a pointer
+to them). It holds the current state and the next step, not history: git, the
+pull requests, and the project ledger hold that. Rewrite its *Now* lines
+rather than appending; keep it under 40 lines. Push and complete any
 pull-request merge before you stop, so the remote matches what the status file
 says.
 
-That file is read whole by every fresh session, so its length taxes every
-session. Keep *Where this stands* to one bullet per accepted chunk of the
-active project's current delivery item plus the in-flight chunk; when a
-delivery item completes, collapse its chunks to one line, since the project
-ledger and the chunk files hold the detail. Keep any per-chunk decision summary
-to ID ranges, with no restated decisions. Aim under 250 lines, and trim in the
-same session that would otherwise grow it.
+### Hand-off
 
-Before that, if there is an active project, give the user a short **status
-table**: one row per delivery item in that project's delivery plan, with
-columns `Item`, `What it is`, and `State`. Pull the description from the
-delivery plan and the state from the chunk ledger and the In-flight block:
-done, in progress (name the chunk and whether it is ready to execute or
-awaiting review), or not yet started. Bold the row for the chunk this session
-reviewed. Skip the table when there is no active project.
+End with a few plain lines for the maintainer, before any IDs:
 
-After an accept, give the user a short **What's new to try** note for the
-chunk just merged, at the very end of the turn. Write for the maintainer
-wearing the user's hat, not for the reviewer: say what a user of the product
-can now do, not which symbol landed or which design section it implements.
-Make it concrete and runnable when the repository provides a real route: name
-the exact command, config, or file that shows the behavior and say what to
-watch for.
+- **What changed:** after an accept, what someone using the product can now
+  do, not which symbol landed or which section it implements. After a
+  rework, what is wrong, in a user's terms, and what the executor will fix.
+- **Worth trying:** after an accept, the exact command, config, or file that
+  shows the new behavior, and what to watch for. Do not manufacture a demo:
+  when the chunk exposed nothing a user can see, say so in one line.
+- **Next:** what runs next, and anything waiting on the maintainer.
 
-Do not manufacture a demo. If the chunk only added an unused module,
-documentation, internal groundwork, or otherwise exposed no user-visible
-behavior, say so honestly in one line instead. This note is terminal output
-only: do not add it to the status file, the chunk file, or a commit. The chunk
-file is the durable record; this is a courtesy that helps the user enjoy what
-just landed.
+After those lines, when there is an active project, give the **project
+map**: a table with one row per delivery item in its delivery plan, columns
+`Item`, `What it is`, and `State`. *What it is* describes the item in plain
+words, from the delivery plan; *State* is done, in progress (ready to build,
+being built, or awaiting review), or not started, from the chunk ledger and
+the In-flight block. Bold the row this session worked on. Skip the map when
+there is no active project.
 
-Close with: *"In a fresh session at this repo, run `relay:go` (next:
-`<the Next block's Run>`)."*
+This note and the map are terminal output only. Then one line of references: the chunk ID,
+the pull request and squash commit, any decision IDs and issues. Close with:
+*"In a fresh session at this repo, run `relay:go` (next: `<the Next block's
+Run>`)."*

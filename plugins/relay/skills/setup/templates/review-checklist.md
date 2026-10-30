@@ -1,25 +1,22 @@
 # The review checklist
 
-Every class of bug a review has missed at least once, kept so the next review
-looks for it by default. Each entry is a *shape*, not a rule: the authority
-docs remain the authority on what the code must do. This file only records
-where a passing test suite has failed to catch a real defect.
+Classes of bug that cost something real (a bug that reached users, a rework)
+and that a passing test suite did not catch, kept so the next review looks for
+them by default. Each entry is a *shape*, not a rule: the authority docs
+remain the authority on what the code must do.
 
 **How it is used.** `relay:review` takes the whole chunk diff through every
-entry here, after the per-unit checks against the cited doc sections. A finding
-that matches an entry cites it as `review-checklist §N` in the review, never in
-code or a tracked doc: like every relay process file, this one is local and
-git-ignored, so a citation of it means nothing to someone with only the
-remote. `relay:execute` does
-not work the whole list; instead the chunk brief's *Kickoff notes* name the
-entries a given chunk is most likely to trip, and the executor reads those
-before building.
+entry here. A finding that matches an entry cites it as `review-checklist §N`
+in the review, never in code or a tracked doc: like every relay process file,
+this one is local and git-ignored. The chunk brief's *Kickoff notes* name the
+two or three entries a chunk is most likely to trip, and the executor reads
+those before building.
 
-**How it grows.** When a review finds a *class* of bug rather than an
-instance, `relay:review` adds it here as the next numbered entry, with the
-finding that revealed it. The provenance is the point: it is the evidence that
-the shape is real. Entries are not renumbered or retired: a shape that has
-stopped mattering is cheaper to skim than to re-derive after it bites again.
+**How it grows.** `relay:review` adds an entry when a finding is a class
+rather than an instance, in two or three lines: the shape, and the finding
+that revealed it. The file stays under twenty entries: when it is full, merge
+similar entries or retire one the gate or a test now catches, leaving its
+number unused.
 
 ---
 

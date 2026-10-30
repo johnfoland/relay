@@ -1,33 +1,23 @@
 # The brief checklist
 
-Every class of mistake a chunk *brief* has carried at least once, kept so the
-next cut looks for it by default. Each entry is a *shape*, not a rule: the
-authority docs remain the authority on what the code must do. This file
-records only where a planner, holding the right decisions, still handed an
-executor a brief that was wrong.
-
-It is the cut-time companion to the review checklist. The division is by
-*when* the mistake is made, not by who finds it: a defect in the code an
-executor wrote belongs there, a defect in the instructions the planner wrote
-belongs here. Most entries are found in review, because that is when a brief's
-error becomes visible; the provenance names the chunk whose brief carried it.
+Ways a chunk *brief* has been wrong that cost something real, kept so the
+next cut looks for them by default. Each entry is a *shape*, not a rule. The
+division from the review checklist is by *when* the mistake is made: a defect
+in the code belongs there, a defect in the brief the planner wrote belongs
+here.
 
 **How it is used.** `relay:plan` takes each draft brief through every entry
 here before setting it ready for an executor. A fix that matches an entry
 cites it as `brief-checklist §N` in the review or the chunk ledger, never in a
 tracked file: like every relay process file, this one is local and
-git-ignored. `relay:execute` does
-not read this file: an executor builds the brief it is given.
+git-ignored. `relay:execute` does not read it.
 
 **How it grows.** When a review finds that the *brief* was wrong rather than
 the code (a decision that reached no unit, an instruction that contradicted
-itself, a *Tests* line that invented a condition), `relay:review` adds it here
-as the next numbered entry with the finding that revealed it. Entries are not
-renumbered or retired.
-
-The boundary with `relay:plan` itself: the skill keeps the *procedure* (what
-to read, decide, and write, in what order). This file keeps the recurring ways
-the product of that procedure has come out wrong.
+itself), `relay:review` adds it here in two or three lines: the shape, and
+the finding that revealed it. The file stays under twenty entries: when it is
+full, merge similar entries or retire one that no longer applies, leaving its
+number unused.
 
 ---
 

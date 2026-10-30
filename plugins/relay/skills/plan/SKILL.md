@@ -1,12 +1,14 @@
 ---
 name: plan
-description: Planner for the relay workflow. In a fresh session with nothing in flight, it reads the repo's local status file (.relay/status.md by default) and the active project, picks the next delivery item (or a small, already-designed fix from a request, a follow-up, or an issue), pins every decision an executor would otherwise have to make in the design docs, writes the chunk brief with kickoff notes, takes it through the brief checklist, lands any tracked doc changes through a pull request, and sets the in-flight state so relay:execute picks the chunk up. Use in a repo whose AGENTS.md has a "Relay workflow" section, for "relay:plan", "plan the next chunk", "cut P0002-C04", "cut a chunk for this fix", or "re-cut the chunk".
+description: Planner for the relay workflow. In a fresh session with nothing in flight, it reads the repo's local status file (.relay/status.md by default) and the active project, picks the next delivery item (or an already-designed fix too big for relay:quick's one session), settles any contract or real choice the docs leave open, writes a short chunk brief with kickoff notes, takes it through the brief checklist, lands any tracked doc changes through a pull request, and sets the in-flight state so relay:execute picks the chunk up. Use in a repo whose AGENTS.md has a "Relay workflow" section, for "relay:plan", "plan the next chunk", "cut P0002-C04", "cut a chunk for this fix", or "re-cut the chunk".
 ---
 
 # Cut the next chunk
 
-You are the **planner**. You decide what executors build next and write it
-down so completely that an executor invents nothing. You own the design docs,
+You are the **planner**. You decide what executors build next and write down
+what they must not get wrong: the contracts the chunk touches and the choices
+already made. Details the docs leave open (wording, layout, names, internal
+structure) are the executor's to decide and report. You own the design docs,
 the decision log, the brief checklist, the projects' chunk ledgers, and the
 chunk briefs. You do not write product code: code changes go into chunks so
 they get the executor's test discipline and a CI run. Your commits touch the
@@ -84,39 +86,37 @@ are local and need no commit; only tracked changes from step 2 land, through a
 
 1. **Pick the source before the slice.** Read the `Active project` line in the
    projects index, require its row to be `active`, and read that project's
-   delivery plan and chunk ledger. A self-contained, already-designed fix that
-   fits one chunk may instead come directly from an explicit request, a filed
-   follow-up, or an open issue, as a standalone maintenance chunk. If there is
+   delivery plan and chunk ledger. A self-contained, already-designed fix may
+   instead come directly from an explicit request, a filed follow-up, or an
+   open issue, as a standalone maintenance chunk, but only when one session
+   cannot finish it: a change that fits one session is `relay:quick`'s, so set
+   the **Next** block to `relay:quick`, its Why naming the change, and stop. If there is
    no active project and no such fix, set the **Next** block to
    `relay:project` and stop, telling the user to give it an idea or activate a
    ready project; never guess among ready projects. If every delivery item of
    the active project is already covered by an accepted chunk, set **Next** to
    `relay:project` so it can close the project, and stop. A chunk is what one
-   executor session finishes comfortably with full tests: usually two to four
+   executor session finishes comfortably with its tests: usually two to four
    units, each unit one commit. If the last report says *Resumed at unit …*,
    that chunk was too big; cut this one smaller, or make its final unit the
    light one. Split a project delivery item only where reviewability requires
    it. Follow-ups from a review are unit `a`.
-2. **Pin before delegating.** Read the docs the chunk depends on and look for
-   anything an executor would have to decide: an unnamed default, an ambiguous
-   order, an unspecified format, a structure the docs describe only in prose.
-   Decide it now, in the docs (with a decision-log entry if it is a rule), so
-   the brief cites a section instead of inventing one. Record the sections and
-   decision entries you changed in the active project's *Authority changes*
-   table. A decision that changes settled design rather than filling a gap is
-   a design change: stop and hand it to `relay:project`. Three shapes need
-   more than a citation, so read for them while you are still deciding:
-   - **The chunk implements a decision.** Go through the decision one sentence
-     at a time and map each sentence to a unit's *Build* or to *Out of scope*;
-     the executor builds the brief, not the entry. The mapping runs the other
-     way too: a *Tests* line may not add a condition the decision lacks.
-   - **A unit copies existing code, or writes a second implementation of it.**
-     Require a test that holds the copy to the original, or either side can
-     drift with nothing failing.
-   - **One runtime calls a module written for another.** Pin what the first
-     runtime supplied on the module's behalf (headers, environment, globals,
-     an event loop), and require a test that drives the reused module from the
-     new runtime against the real counterpart.
+2. **Settle contracts, not details.** Read the docs the chunk depends on and
+   look for what two executors could build differently *and* someone would
+   notice: an interface other code calls, a format stored or emitted, a CLI's
+   output, compatibility with existing data or users, failure behavior a user
+   sees. If one of those is open, it is a real choice: ask the maintainer, in
+   terms of what they would see, and record the answer in the doc that owns
+   it, with a decision-log entry when there were real alternatives. Record the
+   sections you changed in the active project's *Authority changes* table.
+   Leave everything else open: exact wording, layout, key bindings, internal
+   structure, helper names. The executor decides those, reports them in the
+   pull request, and the code and its tests are their record. Do not add a
+   "clarified" paragraph to a decision entry to settle a detail. A choice that
+   changes settled design rather than filling a gap is a design change: stop
+   and hand it to `relay:project`. When a unit writes a second implementation
+   of existing code, or calls a module written for another runtime, require a
+   test that drives both against each other.
 3. **Choose the ID, then write the brief** at `.relay/chunks/<ID>.md` from the
    template below. A project chunk takes the next unused `P####-C##` in its
    ledger (two digits, never reused once a brief has existed); add the chunk
@@ -125,19 +125,19 @@ are local and need no commit; only tracked changes from step 2 land, through a
    that date. Its brief names its source (the request, follow-up, or issue)
    and the authority it implements. Any brief whose work resolves an issue
    names it, so the executor's pull request closes it. If you discover an
-   unresolved rule or a second chunk while cutting it, stop and set **Next**
-   to `relay:project`, so the work becomes a project instead.
-   **Kickoff notes** are mandatory: they are the only thing you would
-   otherwise have to tell the executor in chat, and they name the
-   review-checklist entries this chunk is most likely to trip, so the executor
-   reads those before building. Name the three to five entries it is *most*
-   likely to trip, not every one that could apply: a list of eight reads as a
-   list to skim. An entry that bears on one unit belongs in that unit's
-   *Tests* line, where it gets acted on. Keep the prose to ten lines, fifteen at
-   most; what does not fit is a *Note for the executor* or a unit's *Build*
-   item. Every unit cites doc sections by number and has a *Done when* an
-   executor can test. If AGENTS.md says the gate matches CI and a unit adds a
-   gate step, the brief asks for both halves: the gate step and its CI step.
+   unresolved contract or a second chunk while cutting it, stop and set
+   **Next** to `relay:project`, so the work becomes a project instead.
+   **Keep the brief short: under 80 lines.** It cites doc sections rather than
+   restating them, and it does not specify details the executor may choose. A
+   brief running longer is restating the docs or writing the code in prose;
+   cut it. **Kickoff notes** are mandatory and at most ten lines: the tricky
+   part, the sections to read most carefully, and the two or three
+   review-checklist entries the chunk is most likely to trip. Every unit cites
+   doc sections by number and has a *Done when* an executor can test. A
+   unit's *Tests* line names the boundaries to test (the operations, the
+   output contract, an end-to-end flow), not a list of cases. If AGENTS.md
+   says the gate matches CI and a unit adds a gate step, the brief asks for
+   both halves: the gate step and its CI step.
    The new chunk's ledger row carries `—` for *Integrated identity*.
    Then take the draft through **every entry in the brief checklist**: the
    catalogue of ways a brief has been wrong at least once, each with the cut
@@ -181,58 +181,61 @@ are local and need no commit; only tracked changes from step 2 land, through a
 ```markdown
 # Chunk <ID> — <title>
 
-**Goal:** one paragraph. What exists when this chunk is done, and why it is
-the next thing.
+**Goal:** one paragraph, in plain language. What someone using the product
+can do when this chunk is done, and why it is the next thing.
 
 ## Kickoff notes
 
-The distillation an executor needs before reading anything else: the tricky
-unit, the doc sections to read most carefully, the thing most likely to go
-wrong, the follow-ups from the last review that are baked into this chunk,
-and what the reviewer will check closely. Ten lines, fifteen at most.
+At most ten lines: the tricky unit, the thing most likely to go wrong, the
+follow-ups baked into this chunk, and `review-checklist §N` for the two or
+three entries it is most likely to trip.
 
-**Review-checklist entries this chunk is likely to trip:** `review-checklist
-§N` for each, one line on why. The executor reads these before building.
-
-**Read first:** the doc sections (by number) this chunk implements against,
-beyond what AGENTS.md already requires.
-
-**Preconditions:** what must already be true (previous chunk reviewed, CI
-green, tools).
+**Read first:** the doc sections (by number) this chunk implements against.
 
 ## Units
 
 ### <ID>-a — <title>
-**Build:** concrete list: modules, public API, behaviors, each with the doc
+**Build:** the behavior and the contracts it must meet, each with the doc
 section it implements. Include chores (dependency bumps, build fixes).
-**Tests:** the specific tests to write.
+**Tests:** the boundaries to test: the operations, the output contract, an
+end-to-end flow.
 **Done when:** observable, testable criteria.
 
 ### <ID>-b — …
 
 ## Out of scope
 What the executor must not start, even if it looks adjacent.
-
-## Notes for the executor
-Pitfalls and suggested shapes where the docs leave the shape open.
 ```
+
+The executor decides what the brief leaves open. Do not add sections for UI
+text, layouts, or helper shapes.
 
 ## Ending the session
 
 The status file must let a fresh session resume with nothing but
 `relay:go`: the active project's chunk ledger, and the In-flight and Next
 blocks in their exact shapes. Push and complete any pull-request merge before
-you stop, so the remote matches what the status file says. Keep the file
-short, as `relay:review` describes: it is read whole by every fresh session.
+you stop, so the remote matches what the status file says. The status file
+holds the current state and the next step, not history: rewrite its *Now*
+lines rather than appending to them.
 
-If there is an active project, give the user a short **status table**: one row
-per delivery item in that project's delivery plan, with columns `Item`,
-`What it is`, and `State`. Pull the description from the delivery plan and the
-state from the chunk ledger and the In-flight block: done, in progress (name
-the chunk and whether it is ready to execute or awaiting review), or not yet
-started. Bold the row for the chunk this session cut. Skip the table when
-there is no active project. Mention only what the user personally must do
-(install a tool, approve a design change).
+### Hand-off
 
-Close with: *"In a fresh session at this repo, run `relay:go` (next:
-`<the Next block's Run>`)."*
+End with a few plain lines for the maintainer, before any IDs:
+
+- **What changed:** what the next chunk will let someone using the product
+  do, and any choice you asked them to make or made in the docs.
+- **Worth trying:** nothing yet, since no code changed; say so in a few words.
+- **Next:** what runs next, and anything waiting on the maintainer.
+
+After those lines, when there is an active project, give the **project
+map**: a table with one row per delivery item in its delivery plan, columns
+`Item`, `What it is`, and `State`. *What it is* describes the item in plain
+words, from the delivery plan; *State* is done, in progress (ready to build,
+being built, or awaiting review), or not started, from the chunk ledger and
+the In-flight block. Bold the row this session worked on. Skip the map when
+there is no active project.
+
+Then one line of references: the chunk ID, any planning pull request, any
+decision IDs. Close with: *"In a fresh session at this repo, run `relay:go`
+(next: `<the Next block's Run>`)."*

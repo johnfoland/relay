@@ -9,8 +9,11 @@ plugin's skills (`/relay:<skill>` in Claude Code, `$relay:<skill>` in Codex):
 - `relay:project` shapes an idea into settled design and an ordered delivery
   plan, makes design changes, and closes the project when its work is
   accepted.
-- `relay:plan` cuts the next chunk brief from the active project, or from a
-  small, already-designed fix.
+- `relay:quick` makes a small change in one session: builds it, opens the pull
+  request, and merges it once CI is green, or hands it to `relay:review` when
+  it is risky (see *Risky changes*).
+- `relay:plan` cuts the next chunk brief from the active project, or from an
+  already-designed fix too big for one session.
 - `relay:execute` builds the chunk in flight unit by unit on its own branch
   and draft pull request, then hands it back for review.
 - `relay:review` reviews the chunk in flight, records the review, and either
@@ -19,9 +22,12 @@ plugin's skills (`/relay:<skill>` in Claude Code, `$relay:<skill>` in Codex):
   reviewing and merging release-please's release pull request. It is only
   ever run on purpose, never by `relay:go`.
 
-Code reaches the integration branch only through a chunk pull request, so every
-change gets the executor's test discipline and a CI run. The status file is the
-handoff between sessions: run each step in a fresh session.
+Code reaches the integration branch only through a chunk or fix pull
+request, so every change gets tests and a CI run. The status file is the
+handoff between sessions: run each step in a fresh session. Every step ends
+with a few plain lines for the maintainer (what changed, what is worth
+trying, what is next), and questions to the maintainer are about outcomes,
+not internals.
 
 The process files (status, chunk briefs, projects, and the two checklists)
 live in `.relay/`, which git ignores: they are never committed, and there is
@@ -33,10 +39,17 @@ carry the review. Tracked files (code, docs, the decision log, the changelog,
 pull request titles) cite authority sections, decision IDs, issues, and pull
 requests, never a chunk ID, a review finding, or a checklist entry.
 
+Design docs hold contracts (what other code, stored data, and users rely on)
+and the choices that had real trade-offs, not specs: wording, layout, and
+internal structure are the executor's to decide and report in the pull
+request, and the code and its tests are their record. Tests sit at the
+boundaries (operations, output contracts, a few end-to-end flows), never
+sleep for a fixed time, and keep the gate within its budget.
+
 When code and an authority doc disagree, one of them is wrong: fix it and say
-which. A decided entry in the decision log is not re-litigated; where the docs
-genuinely do not cover something, add an entry, update the doc that should have
-said it, and cite the entry at the code site.
+which. A decided entry in the decision log is not re-litigated. An entry is
+only a choice with real alternatives that the maintainer ruled on; cite it at
+the code site and in the doc that carries the rule.
 
 ### Settings
 
@@ -46,6 +59,8 @@ said it, and cite the entry at the code site.
   from `<integration>` by a merge-commit release pull request>.
 - **Gate:** `<gate>`, which runs <what it runs>. It passes before every unit
   commit and push. <"CI runs these same targets." | omit>
+- **Gate budget:** <N minutes | none>. A change that pushes the gate past it
+  makes its tests cheaper first.
 - **CI:** <`<workflow file>` runs the gate on pull requests <once ready for
   review | including drafts>; pushes to `<integration>` <run it | run none> |
   none>.
@@ -56,10 +71,15 @@ said it, and cite the entry at the code site.
   `<integration>`, titled without the chunk ID. | hand-cut, as *Releases*
   describes: behavior-bearing unit commits carry their changelog entries, and
   `relay:release` cuts versions. | none>.
-- **Issues:** <GitHub Issues, as *Roadmap* describes: review follow-ups and
-  ideas are filed as issues, a project or maintenance chunk may start from
-  one, and the pull request that finishes it closes it. | none: follow-ups
-  live in the status file>.
+- **Issues:** <GitHub Issues, as *Roadmap* describes: follow-ups are
+  collected at each hand-off and filed as issues once the maintainer picks
+  which, related ones grouped into one; a project, fix, or maintenance chunk
+  may start from one, and the pull request that finishes it closes it. |
+  none: follow-ups live in the status file>.
+- **Risky changes:** stored data, job handling, anything that could interrupt
+  or lose work in progress, security, and release machinery<, plus
+  repo-specific areas>. A `relay:quick` that touches one goes to
+  `relay:review` instead of merging itself.
 - **Authority:** <the docs that define behavior, in order, e.g.
   `docs/spec.md`, then `docs/design.md`; `docs/README.md` gives the reading
   order. | `README.md` and the code's own documentation>.
