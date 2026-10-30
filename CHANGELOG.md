@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/johnfoland/relay/compare/v0.6.2...v0.7.0) (2026-10-30)
+
+
+### Features
+
+* scale relay's process to the size of the change ([#22](https://github.com/johnfoland/relay/issues/22)) ([8e27afd](https://github.com/johnfoland/relay/commit/8e27afdef0048084e35aaa6877c29388b8477276))
+
 ## [0.6.2](https://github.com/johnfoland/relay/compare/v0.6.1...v0.6.2) (2026-10-27)
 
 
