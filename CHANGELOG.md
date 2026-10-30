@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/johnfoland/relay/compare/v0.7.0...v0.8.0) (2026-10-30)
+
+
+### Features
+
+* **setup:** update repos through a stamp and migrations ([#24](https://github.com/johnfoland/relay/issues/24)) ([a6c4f49](https://github.com/johnfoland/relay/commit/a6c4f49ae1914662255c770990d0ee90208ece7b))
+
 ## [0.7.0](https://github.com/johnfoland/relay/compare/v0.6.2...v0.7.0) (2026-10-30)
 
 
