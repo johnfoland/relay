@@ -48,6 +48,46 @@ class CheckTest(unittest.TestCase):
         errors = check.check(self.root)
         self.assertTrue(any(fragment in e for e in errors), f"{fragment!r} not in {errors}")
 
+    def migrations(self, entries, front="stamp: 1\nsystem: relay\nsource: https://example.com/relay"):
+        write(self.plugin / "skills/plan/MIGRATIONS.md", f"---\n{front}\n---\n\n# Migrations\n\n{entries}")
+
+    GOOD_ENTRIES = (
+        "## 2: A change\n\n- **Detect:** it is there.\n- **Apply:** put it there.\n\n"
+        "## 1: Baseline\n\nNothing to apply.\n"
+    )
+
+    def test_good_migrations_pass(self):
+        self.migrations(self.GOOD_ENTRIES)
+        self.assertEqual(check.check(self.root), [])
+
+    def test_migrations_system_mismatch(self):
+        self.migrations(self.GOOD_ENTRIES, front="stamp: 1\nsystem: other\nsource: x")
+        self.assertProblem("isn't the plugin's name")
+
+    def test_migrations_without_source(self):
+        self.migrations(self.GOOD_ENTRIES, front="stamp: 1\nsystem: relay")
+        self.assertProblem("has no source")
+
+    def test_migrations_with_a_gap(self):
+        self.migrations(self.GOOD_ENTRIES.replace("## 2:", "## 3:"))
+        self.assertProblem("without gaps")
+
+    def test_migrations_oldest_first(self):
+        self.migrations("## 1: Baseline\n\nNothing.\n\n## 2: A change\n\n- **Detect:** x\n- **Apply:** y\n")
+        self.assertProblem("without gaps")
+
+    def test_migration_without_apply(self):
+        self.migrations(self.GOOD_ENTRIES.replace("- **Apply:** put it there.\n", ""))
+        self.assertProblem("migration 2 has no **Apply:** line")
+
+    def test_migrations_bad_heading(self):
+        self.migrations("## Version 2\n\n" + self.GOOD_ENTRIES)
+        self.assertProblem("isn't a '## <N>: <title>' heading")
+
+    def test_migrations_missing_template(self):
+        self.migrations(self.GOOD_ENTRIES.replace("put it there", "copy `templates/nope.md`"))
+        self.assertProblem("templates/nope.md")
+
     def test_good_tree_passes(self):
         self.assertEqual(check.check(self.root), [])
 

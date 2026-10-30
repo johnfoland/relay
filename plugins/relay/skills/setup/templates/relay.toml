@@ -1,0 +1,17 @@
+# Written by relay:setup, which reads it on later runs to offer only what
+# changed in the relay since. Edit `deferred` or `declined` by hand to change
+# what it offers.
+stamp = 1
+source = "https://github.com/johnfoland/relay"
+
+# The highest entry in relay:setup's MIGRATIONS.md this repository has been
+# reviewed against.
+level = <N>
+
+# Entries (by number) at or below `level` the maintainer put off; later runs
+# offer them again.
+deferred = []
+
+# Entries (keyed by number, as 2 = "…") the maintainer turned down, with the
+# reason. Ask for one by name to apply it after all.
+[declined]

@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Set up, update, or adopt the relay workflow in a repository. Creates the baseline it needs when missing (AGENTS.md, a CLAUDE.md that imports it, a decision log), optionally adds hand-cut releases, writes the "Relay workflow" section of AGENTS.md (branches, gate, CI, releases, GitHub Issues, authority docs, file paths), git-ignores .relay/, and scaffolds the status file, chunk directory, checklists, and project registry in it. Also moves committed relay process files out of git, upgrades repos set up for the older relay-* skills, and prunes a relay repo whose docs, decision log, and checklists have grown into specs and history. Use when the user wants to work in chunks, "set up relay", adopt the relay in a repo, migrate a repo's own planner/executor skills onto it, upgrade from the relay-* skills, change a relay setting, or stop committing the process files, "prune the relay docs"; and whenever another relay skill stops because AGENTS.md has no relay section.
+description: Set up, update, or adopt the relay workflow in a repository. Creates the baseline it needs when missing (AGENTS.md, a CLAUDE.md that imports it, a decision log), optionally adds hand-cut releases, writes the "Relay workflow" section of AGENTS.md (branches, gate, CI, releases, GitHub Issues, authority docs, file paths), git-ignores .relay/, and scaffolds the status file, chunk directory, checklists, and project registry in it. Also moves committed relay process files out of git, upgrades repos set up for the older relay-* skills, and brings a repo set up by an earlier relay up to date from its .agents/relay.toml stamp and this skill's MIGRATIONS.md. Use when the user wants to work in chunks, "set up relay", adopt the relay in a repo, migrate a repo's own planner/executor skills onto it, upgrade from the relay-* skills, change a relay setting, or stop committing the process files, "update the relay setup"; and whenever another relay skill stops because AGENTS.md has no relay section.
 ---
 
 # Set up the relay workflow
@@ -66,13 +66,9 @@ Read AGENTS.md, CLAUDE.md, the README, and any docs index.
   settings, ask what should change, and go to §3. If git tracks any of its
   process files, or the section and process files still name the older
   `relay-*` skills (`/relay-next`, `/relay-execute`, …), the update includes
-  that migration (§3), whether or not the user asked for anything else. If
-  the section lacks the **Gate budget** or **Risky changes** settings, or the
-  status file still has *Where this stands* or *Decisions by chunk*, the update
-  brings them to the current templates (§3). If the design docs, decision
-  log, or checklists have grown large (a design doc over about a thousand
-  lines, "Clarified on" or "Amended on" add-ons in the decision log, a
-  checklist over twenty entries), offer a prune (§7).
+  that migration (§3), whether or not the user asked for anything else. It
+  also offers what changed in the relay since the repo was last reviewed
+  (§7), from its stamp, `.agents/relay.toml`.
 
 Then detect what you can instead of asking for it:
 
@@ -226,14 +222,6 @@ a migration, and these rules keep it safe:
      (`git grep -n -E 'relay-(next|execute|project|release|setup)'`) and in
      `.relay/`. Chunk briefs and reviews already written are history; leave
      them.
-- **Upgrade from an earlier relay version.** Add the **Gate budget** and
-  **Risky changes** settings (§1), replace the section's prose from
-  `templates/agents-section.md` keeping every setting's value, and rewrite the
-  status file to the shape in `templates/status.md`: its *Now* lines are the
-  current state in at most three lines, *Where this stands* history and
-  *Decisions by chunk* go (git and the pull requests hold them), and open
-  follow-ups move to *Follow-ups*. Bring the checklists' and the projects
-  index's explanatory text in line with the templates.
 - **Remove the local skills last.** Delete them in the same change only if the
   relay plugin is installed where this repo's agents will find it
   (`claude plugin list`, `codex plugin list`, or ask). Otherwise the repo loses
@@ -284,6 +272,10 @@ paragraphs.
 7. **Docs index.** If the authority docs have an index (a `docs/README.md`),
    do not list the process files there: they are not in the repository, and
    AGENTS.md already says where they are.
+8. **The stamp.** A fresh setup writes `.agents/relay.toml` from
+   `templates/relay.toml`, its `level` the highest entry in `MIGRATIONS.md`
+   beside this file: the templates it just copied already have every change.
+   An adoption of existing machinery (§3) leaves the stamp to §7 instead.
 
 ## 5. Repository settings
 
@@ -307,7 +299,7 @@ before anything else, after confirming with the user.
 
 Show the user a summary of the changes. Unless they say otherwise, land the
 tracked ones (AGENTS.md, CLAUDE.md, the decision log, the changelog,
-`.gitignore`, any docs edits, and a migration's removals) like any planner
+`.gitignore`, the stamp, any docs edits, and a migration's removals) like any planner
 change: a `plan/relay-setup` branch from the integration branch, one commit, a
 pull request (titled as the repo's convention requires), CI, and a
 squash-merge. If the repo has no remote, or the user wants it committed
@@ -316,64 +308,67 @@ directly, commit on the current branch and say so. Before committing, check
 staged. After the merge, pull the integration branch and confirm `.relay/` is
 intact.
 
-## 7. Prune an existing setup
+## 7. Update to the current relay
 
-A repo that has run the relay for a while may carry bulk the skills no longer
-ask for: design docs written as specs, decision-log entries for details with
-"clarified" paragraphs piled on, long checklists, and a status file that is a
-history. A prune cuts it back once. It changes docs and process files, never
-code or tests. Run it when no chunk is `executing` or `awaiting review`.
+`MIGRATIONS.md` beside this file lists, newest first, each change to what
+this skill puts in a repository that repositories set up earlier may want:
+how to tell whether a repository has it (**Detect**) and how to apply it
+(**Apply**). The repository's stamp, `.agents/relay.toml`, records the
+highest entry it has been reviewed against (`level`), the entries the
+maintainer put off (`deferred`), and those they turned down (`[declined]`,
+with the reason). A repository with no stamp is at level `0`. If a stamp of
+that name has a different `source`, it belongs to another system: stop and
+tell the maintainer. Run the update when no chunk is `executing` or
+`awaiting review`.
 
-1. **Measure and propose.** Count the lines of each authority doc, the
-   decision log, both checklists, and the status file, and note the gate's
-   time and any open flaky-test issues. Then show the maintainer what the
-   prune would do, in outcome terms ("the design doc drops from about 4,700
-   lines to about 600: the contracts stay, screen layouts and exact wording
-   go, since the code and tests already record them"), and ask before
-   changing anything. Do one doc at a time if they prefer.
-2. **Design docs.** Keep the contracts (interfaces between parts, stored and
-   emitted formats, a CLI's output, compatibility and migration rules,
-   failure behavior a user sees) and the reasoning behind real choices.
-   Remove exact UI text, layouts, key and cursor rules, and step-by-step
-   behavior the code and tests record. Fold a finished delivery-stage plan
-   into the doc that describes current behavior (its contracts only) and
-   remove the plan; git history keeps the original. Keep section numbers that
-   code or the decision log cites, or update those citations in the same
-   change.
-3. **Decision log.** Never delete an entry or reuse an ID: code cites them.
-   Fold each entry's "Clarified on" and "Amended on" add-ons into its current
-   wording, keeping one "Changed YYYY-MM: … because …" line where the
-   decision really changed. An entry that records an implementation detail
-   rather than a choice the maintainer made shrinks to one line: "Retired
-   YYYY-MM: an implementation detail; the code and its tests record it."
-   Bring the log's header rules in line with `templates/decisions.md`.
-4. **Checklists.** Cut each to its twenty most useful entries, two or three
-   lines each: the shape and its provenance. Merge near-duplicates; retire
-   entries the gate or a test now catches, leaving their numbers unused.
-   Replace each file's explanatory text with the template's.
-5. **Status file and projects.** Rewrite the status file to
-   `templates/status.md`'s shape. In a completed project's file, nothing need
-   change: it is local history.
-6. **Tests and gate.** A prune does not touch tests. If the gate is over
-   budget, or timing tests are flaky, offer a project or a `relay:quick` (fixed
-   sleeps replaced by waits on conditions, text and layout tests cut back to
-   boundary tests), and set the **Next** block to it if the maintainer agrees.
-7. **Land it** as §6 describes, on a `plan/relay-prune` branch: tracked docs
-   and the decision log in the pull request, process files edited in place.
-   The pull request body gives the before and after line counts.
+1. **Collect what to offer:** every entry above `level`, the `deferred`
+   ones, and every entry whose **Scope** is `local` (the stamp cannot vouch
+   for the git-ignored `.relay/` files, which live on one machine). Leave out
+   the declined ones, those whose **Detect** says the repository already has
+   them, and those a remaining entry **Supersedes**. List the declined ones
+   in one line, so the maintainer can name one to take it after all.
+2. **Ask** with the harness's structured question tool which to apply: a
+   multi-select, nothing preselected, each entry described by what it changes
+   for the maintainer, with its number after. Then ask whether each one left
+   unpicked is put off (asked again next time) or declined (with a reason).
+3. **Check requirements.** An entry's **Requires** is met when the
+   repository has it, it was picked, or a picked or present entry supersedes
+   it; otherwise name it and ask whether to add it or drop the entry that
+   needs it.
+4. **Apply** the picked entries oldest first, each by its **Apply** line.
+   They change docs, settings, and process files, never code or tests.
+5. **Write the stamp** from `templates/relay.toml` if there is none: `level`
+   becomes the highest entry, whatever was picked, since every entry up to it
+   has now been reviewed; `deferred` and `[declined]` take this run's
+   answers, and an entry that was applied or found present leaves both.
+6. **Land it** as §6 describes, on a `plan/relay-update` branch titled as the
+   repo's convention requires (`chore: update the relay setup to level <N>`):
+   tracked changes and the stamp in the pull request, process files edited
+   in place. The body says what changed for the maintainer and the level the
+   repo moved from and to.
+
+When the maintainer names one entry ("apply migration 5"), apply just that one, remove
+it from `deferred` and `[declined]`, and leave `level` where it is: the
+entries between have not been reviewed.
+
+When you change this skill or its templates in a way existing repositories
+should pick up, add an entry to `MIGRATIONS.md` with the next number, in the
+form its header gives.
 
 ## 8. Hand off
 
 End with a few plain lines for the maintainer, before any IDs:
 
-- **What changed:** what the relay will now do in this repo (or, after a
-  prune, how much shorter the docs are and what was kept), in their terms.
+- **What changed:** what the relay will now do in this repo, in their terms
+  (after an update, what each applied entry changed, such as how much shorter
+  the docs are and what was kept).
 - **Worth trying:** the first thing to run.
 - **Next:** anything waiting on the maintainer, such as a repository setting.
 
 Then the references: the settings chosen, the files created or adopted, where
 a migration's archive is, the baseline sections created or changed, anything
-moved out of retired local skills and where it went, and the pull request. A
+moved out of retired local skills and where it went, the stamp's level
+(from and to, after an update), and the pull request. A
 fresh setup leaves the **Next** block at `—`. Close with: *"In a fresh session
 at this repo, run `relay:project <idea>` to shape the first project, or
 `relay:quick` with a small change. After that, `relay:go` runs each next

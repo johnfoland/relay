@@ -1,6 +1,6 @@
 ---
 name: go
-description: Run the relay workflow's next step without having to remember which skill it is. Reads the Next block of the repo's local status file (.relay/status.md by default), checks it against the In-flight state and the remote, says what it is about to run and why, then runs that skill (relay:execute, relay:review, relay:plan, relay:project, or relay:quick) in this session. Asks the user when the recorded step and the repo disagree or nothing is queued, and only ever suggests relay:release. Use in a repo whose AGENTS.md has a "Relay workflow" section, for "relay:go", "go", "next step", "continue the relay", "what's next", or at the start of a fresh session in such a repo.
+description: Run the relay workflow's next step without having to remember which skill it is. Reads the Next block of the repo's local status file (.relay/status.md by default), checks it against the In-flight state and the remote, says what it is about to run and why, then runs that skill (relay:execute, relay:review, relay:plan, relay:project, or relay:quick) in this session. Asks the user when the recorded step and the repo disagree or nothing is queued, and only ever suggests relay:release, or relay:setup when the repo has relay changes it has not reviewed. Use in a repo whose AGENTS.md has a "Relay workflow" section, for "relay:go", "go", "next step", "continue the relay", "what's next", or at the start of a fresh session in such a repo.
 ---
 
 # Run the next step
@@ -95,3 +95,13 @@ whether anything is releasable, and if so, say so in one line and suggest
 - **release-please:** an open pull request carries the
   `autorelease: pending` label
   (`gh pr list --state open --label "autorelease: pending"`).
+
+## 5. Setup updates are suggested, never run
+
+When the step you ran (or the state you found) leaves nothing in flight, also
+compare the repository's stamp, `.agents/relay.toml`, with
+`../setup/MIGRATIONS.md` beside this file. When there is no stamp, or its
+`level` is below that file's highest entry, say in one line that the relay
+has changes this repository has not reviewed, and suggest `relay:setup`.
+Never run the update from here: it changes docs and settings the maintainer
+should choose.

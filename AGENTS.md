@@ -24,7 +24,8 @@ the way it is.
   version is release-please's; never edit it by hand.
 - `plugins/relay/skills/<skill>/SKILL.md`: one skill per directory, the
   directory name equal to the frontmatter `name`. `setup/templates/` holds
-  what `relay:setup` writes into a repository.
+  what `relay:setup` writes into a repository, and `setup/MIGRATIONS.md` the
+  changes to it that repositories set up earlier should be offered (DEC-13).
 - `plugins/relay-band/`: a second, Claude Code-only plugin (a mod): the
   `hooks/register.tsx` module draws a button above the prompt that runs
   `relay:go` in a fresh session of a relay repository; `hooks/*.test.tsx` are
@@ -120,6 +121,11 @@ The roadmap is the issue list on `johnfoland/relay`. Keep it current:
   maintainer (what changed, what is worth trying, what is next), then the
   project map while a project is active, IDs last, and asks the maintainer
   about outcomes, not internals (DEC-12).
+- **Changes to what `setup` writes get a migration.** A change to a template,
+  a setting, or the shape of a process file that existing repositories
+  should pick up adds the next entry to `setup/MIGRATIONS.md`, with **Detect**
+  and **Apply** lines, in the same pull request. A change only to how a skill
+  runs does not (DEC-13).
 - **Old names live only in `setup`.** `setup`'s migration text is the one place
   that names the pre-plugin `relay-*` skills; `tools/check.py` fails on them
   anywhere else.

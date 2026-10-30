@@ -29,7 +29,7 @@ Seven skills run the work, and an eighth runs whichever comes next:
 | `relay:execute` | Builds the brief unit by unit, with tests at its boundaries, on its own branch and draft pull request. |
 | `relay:review` | Reviews the chunk against the design docs and a short checklist, then sends it back or merges it. |
 | `relay:release` | Cuts a version, by hand from the changelog or through release-please. `relay:go` only ever suggests it. |
-| `relay:setup` | Adds the workflow to a repository, updates it, or prunes docs that have grown into specs. |
+| `relay:setup` | Adds the workflow to a repository, or brings one set up by an earlier relay up to date, offering each change since its last review. |
 
 In Claude Code a skill runs as `/relay:<skill>`; in Codex, as
 `$relay:<skill>`.
