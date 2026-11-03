@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Set up, update, or adopt the relay workflow in a repository. Creates the baseline it needs when missing (AGENTS.md, a CLAUDE.md that imports it, a decision log), optionally adds hand-cut releases, writes the "Relay workflow" section of AGENTS.md (branches, gate, CI, releases, GitHub Issues, authority docs, file paths), git-ignores .relay/, and scaffolds the status file, chunk directory, checklists, and project registry in it. Also moves committed relay process files out of git, upgrades repos set up for the older relay-* skills, and brings a repo set up by an earlier relay up to date from its .agents/relay.toml stamp and this skill's MIGRATIONS.md. Use when the user wants to work in chunks, "set up relay", adopt the relay in a repo, migrate a repo's own planner/executor skills onto it, upgrade from the relay-* skills, change a relay setting, or stop committing the process files, "update the relay setup"; and whenever another relay skill stops because AGENTS.md has no relay section.
+description: Set up or adopt the relay workflow in a repository. Creates the baseline it needs when missing (AGENTS.md, a CLAUDE.md that imports it, a decision log), optionally adds hand-cut releases, writes the "Relay workflow" section of AGENTS.md (branches, gate, CI, releases, GitHub Issues, authority docs, file paths), git-ignores .relay/, and scaffolds the status file, chunk directory, checklists, and project registry in it. Also moves committed process files out of git when it adopts a repo's own planner/executor process. Hands a repo that already has a relay section to relay:update. Use when the user wants to work in chunks, "set up relay", adopt the relay in a repo, migrate a repo's own planner/executor skills onto it, or upgrade from the relay-* skills; and whenever another relay skill stops because AGENTS.md has no relay section.
 ---
 
 # Set up the relay workflow
@@ -21,6 +21,7 @@ the chunk and take one session. The relay plugin's skills run it:
 - `relay:review` (reviewer) reviews the chunk in flight and merges accepted
   work.
 - `relay:release` cuts a version.
+- `relay:update` brings a repository set up by an earlier relay up to date.
 
 In Claude Code they are invoked as `/relay:<skill>`, and in Codex as
 `$relay:<skill>`; this file and the others name them `relay:<skill>`.
@@ -62,13 +63,11 @@ Read AGENTS.md, CLAUDE.md, the README, and any docs index.
 - **No baseline** (no AGENTS.md, or one without a decision log): §4 creates
   what is missing. Keep whatever instructions already exist; never drop a rule
   silently.
-- **A relay section already exists:** this is an update. Show the current
-  settings, ask what should change, and go to §3. If git tracks any of its
-  process files, or the section and process files still name the older
-  `relay-*` skills (`/relay-next`, `/relay-execute`, …), the update includes
-  that migration (§3), whether or not the user asked for anything else. It
-  also offers what changed in the relay since the repo was last reviewed
-  (§7), from its stamp, `.agents/relay.toml`.
+- **A relay section already exists:** this is an update. Say so in one line,
+  then read `../update/SKILL.md`, relative to this file, and follow it from
+  the start. It comes back to §3 when git tracks any of the process files, or
+  the section and process files still name the older `relay-*` skills
+  (`/relay-next`, `/relay-execute`, …).
 
 Then detect what you can instead of asking for it:
 
@@ -273,9 +272,15 @@ paragraphs.
    do not list the process files there: they are not in the repository, and
    AGENTS.md already says where they are.
 8. **The stamp.** A fresh setup writes `.agents/relay.toml` from
-   `templates/relay.toml`, its `level` the highest entry in `MIGRATIONS.md`
-   beside this file: the templates it just copied already have every change.
-   An adoption of existing machinery (§3) leaves the stamp to §7 instead.
+   `templates/relay.toml`, its `level` the highest entry in
+   `../update/MIGRATIONS.md`, relative to this file: the templates it just
+   copied already have every change. An adoption of existing machinery (§3)
+   leaves the stamp to `relay:update` instead, which reviews the entries with
+   the maintainer.
+
+When you change this skill or its templates in a way existing repositories
+should pick up, add an entry to `../update/MIGRATIONS.md` with the next number,
+in the form its header gives.
 
 ## 5. Repository settings
 
@@ -308,69 +313,19 @@ directly, commit on the current branch and say so. Before committing, check
 staged. After the merge, pull the integration branch and confirm `.relay/` is
 intact.
 
-## 7. Update to the current relay
-
-`MIGRATIONS.md` beside this file lists, newest first, each change to what
-this skill puts in a repository that repositories set up earlier may want:
-how to tell whether a repository has it (**Detect**) and how to apply it
-(**Apply**). The repository's stamp, `.agents/relay.toml`, records the
-highest entry it has been reviewed against (`level`), the entries the
-maintainer put off (`deferred`), and those they turned down (`[declined]`,
-with the reason). A repository with no stamp is at level `0`. If a stamp of
-that name has a different `source`, it belongs to another system: stop and
-tell the maintainer. Run the update when no chunk is `executing` or
-`awaiting review`.
-
-1. **Collect what to offer:** every entry above `level`, the `deferred`
-   ones, and every entry whose **Scope** is `local` (the stamp cannot vouch
-   for the git-ignored `.relay/` files, which live on one machine). Leave out
-   the declined ones, those whose **Detect** says the repository already has
-   them, and those a remaining entry **Supersedes**. List the declined ones
-   in one line, so the maintainer can name one to take it after all.
-2. **Ask** with the harness's structured question tool which to apply: a
-   multi-select, nothing preselected, each entry described by what it changes
-   for the maintainer, with its number after. Then ask whether each one left
-   unpicked is put off (asked again next time) or declined (with a reason).
-3. **Check requirements.** An entry's **Requires** is met when the
-   repository has it, it was picked, or a picked or present entry supersedes
-   it; otherwise name it and ask whether to add it or drop the entry that
-   needs it.
-4. **Apply** the picked entries oldest first, each by its **Apply** line.
-   They change docs, settings, and process files, never code or tests.
-5. **Write the stamp** from `templates/relay.toml` if there is none: `level`
-   becomes the highest entry, whatever was picked, since every entry up to it
-   has now been reviewed; `deferred` and `[declined]` take this run's
-   answers, and an entry that was applied or found present leaves both.
-6. **Land it** as §6 describes, on a `plan/relay-update` branch titled as the
-   repo's convention requires (`chore: update the relay setup to level <N>`):
-   tracked changes and the stamp in the pull request, process files edited
-   in place. The body says what changed for the maintainer and the level the
-   repo moved from and to.
-
-When the maintainer names one entry ("apply migration 5"), apply just that one, remove
-it from `deferred` and `[declined]`, and leave `level` where it is: the
-entries between have not been reviewed.
-
-When you change this skill or its templates in a way existing repositories
-should pick up, add an entry to `MIGRATIONS.md` with the next number, in the
-form its header gives.
-
-## 8. Hand off
+## 7. Hand off
 
 End with a few plain lines for the maintainer, before any IDs:
 
-- **What changed:** what the relay will now do in this repo, in their terms
-  (after an update, what each applied entry changed, such as how much shorter
-  the docs are and what was kept).
+- **What changed:** what the relay will now do in this repo, in their terms.
 - **Worth trying:** the first thing to run.
 - **Next:** anything waiting on the maintainer, such as a repository setting.
 
 Then the references: the settings chosen, the files created or adopted, where
 a migration's archive is, the baseline sections created or changed, anything
-moved out of retired local skills and where it went, the stamp's level
-(from and to, after an update), and the pull request. A
-fresh setup leaves the **Next** block at `—`. Close with: *"In a fresh session
-at this repo, run `relay:project <idea>` to shape the first project, or
-`relay:quick` with a small change. After that, `relay:go` runs each next
-step."* An update that left a step queued closes with: *"In a fresh session at
-this repo, run `relay:go`."*
+moved out of retired local skills and where it went, the stamp's level, and
+the pull request. A fresh setup leaves the **Next** block at `—`. Close with:
+*"In a fresh session at this repo, run `relay:project <idea>` to shape the
+first project, or `relay:quick` with a small change. After that, `relay:go`
+runs each next step."* An adoption also says to run `relay:update` to review
+what changed in the relay since its process began.

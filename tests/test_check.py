@@ -126,6 +126,12 @@ class CheckTest(unittest.TestCase):
         write(self.plugin / "skills/plan/SKILL.md", skill("plan", "Copy `templates/gone.md`."))
         self.assertProblem("templates/gone.md, which doesn't exist")
 
+    def test_template_in_the_setup_skill(self):
+        write(self.plugin / "skills/setup/SKILL.md", skill("setup"))
+        write(self.plugin / "skills/setup/templates/stamp.toml", "stamp = 1\n")
+        write(self.plugin / "skills/update/SKILL.md", skill("update", "Copy `templates/stamp.toml`."))
+        self.assertEqual(check.check(self.root), [])
+
     def test_plugin_with_neither_skills_nor_hooks(self):
         self.add_plugin("empty")
         self.assertProblem("neither a skills/ directory nor hooks/hooks.json")
@@ -146,7 +152,7 @@ class CheckTest(unittest.TestCase):
         self.assertEqual(check.check(self.root), [])
 
     def test_planning_branch_is_not_an_old_name(self):
-        write(self.plugin / "skills/go/SKILL.md", skill("go", "Branch `plan/relay-setup`."))
+        write(self.plugin / "skills/go/SKILL.md", skill("go", "Branch `plan/relay-setup` or `plan/relay-update`."))
         self.assertEqual(check.check(self.root), [])
 
 

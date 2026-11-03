@@ -24,7 +24,7 @@ Claude format lacks.
 ## DEC-2: Bare skill names under the plugin's namespace (2026-10)
 
 The skills are named `go`, `project`, `quick`, `plan`, `execute`, `review`,
-`release`, and `setup`. Both agents prefix a plugin's skills with the plugin name, so
+`release`, `setup`, and `update`. Both agents prefix a plugin's skills with the plugin name, so
 users type `/relay:go` in Claude Code and `$relay:go` in Codex, and a bare
 `go` cannot collide with another plugin's or a standalone skill of the same
 name (tested in both). Prefixed names (`relay-go`) were ruled out: inside the
@@ -167,10 +167,12 @@ retire one the gate now catches. `relay:setup` prunes repositories set up
 before this (§7), as a mode rather than its own skill, since it is a one-off
 upgrade like the migrations setup already owns. Changed 2026-10: the prune
 became migrations 3 to 6 under DEC-13, because the stamp records what a
-repository has reviewed and the update offers each change on its own.
+repository has reviewed and the update offers each change on its own. Changed
+2026-11: the update became its own skill, because under DEC-13 it recurs and is
+no longer a one-off.
 
 *Where:* `skills/setup/templates/status.md`, `skills/review/SKILL.md`,
-`skills/execute/SKILL.md` §5, `skills/setup/SKILL.md` §7.
+`skills/execute/SKILL.md` §5, `skills/update/SKILL.md`.
 
 ## DEC-12: Every hand-off ends in plain language (2026-10)
 
@@ -184,11 +186,11 @@ follow what the sessions did or answer their questions.
 
 *Where:* the *Hand-off* section of each skill.
 
-## DEC-13: `relay:setup` updates repositories through a stamp and migrations (2026-10)
+## DEC-13: `relay:update` updates repositories through a stamp and migrations (2026-10)
 
-`relay:setup` follows the Stamp convention: each repository it sets up
+relay follows the Stamp convention: each repository it sets up
 carries a tracked stamp, `.agents/relay.toml`, recording the highest entry
-of the setup skill's `MIGRATIONS.md` it has been reviewed against and what
+of the update skill's `MIGRATIONS.md` it has been reviewed against and what
 the maintainer put off or turned down; an update offers only the entries
 after it, each with a **Detect** and an **Apply** line. Migration levels are
 their own numbers, not the plugin's version: most releases change how a
@@ -198,7 +200,14 @@ travels with the repository and they do not. Guessing what a repository
 lacks from its files alone, as the update did before, was ruled out: it
 could not tell a change the maintainer declined from one never offered.
 `relay:go` suggests the update when the stamp is behind, as it suggests a
-release, and never runs it.
+release, and never runs it. Changed 2026-11: the update moved from a section of
+`relay:setup` to its own skill, because it recurs through a repository's life,
+`relay:go` was sending set-up repositories to a skill named for first-time
+setup, and Stamp puts the migrations file beside the skill that applies it.
+`relay:setup` keeps the templates and the moves adoption also needs (its §3).
+It is named `update` rather than `migrate` because `relay:setup` already uses
+"migrate" for moving a repository onto the relay, and because the skill also
+changes settings.
 
-*Where:* `skills/setup/SKILL.md` §7, `skills/setup/MIGRATIONS.md`,
+*Where:* `skills/update/SKILL.md`, `skills/update/MIGRATIONS.md`,
 `skills/setup/templates/relay.toml`, `skills/go/SKILL.md` §5.
