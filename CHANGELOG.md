@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/johnfoland/relay/compare/v0.8.0...v0.9.0) (2026-11-03)
+
+
+### Features
+
+* **update:** split updates out of setup into a relay:update skill ([#26](https://github.com/johnfoland/relay/issues/26)) ([c28d3c5](https://github.com/johnfoland/relay/commit/c28d3c5a81c1564d34eb844367f020e0278451df))
+
 ## [0.8.0](https://github.com/johnfoland/relay/compare/v0.7.0...v0.8.0) (2026-10-30)
 
 
