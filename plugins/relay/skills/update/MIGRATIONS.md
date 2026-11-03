@@ -9,7 +9,8 @@ source: https://github.com/johnfoland/relay
 Each entry is a change to what `relay:setup` puts in a repository that
 repositories set up earlier may want. A repository records the highest entry
 it has been reviewed against in its stamp, `.agents/relay.toml`, and
-`relay:setup`'s update (§7) offers the entries after it.
+`relay:update` offers the entries after it. `templates/` paths below are in
+the setup skill's folder (`../setup/templates/`).
 
 A change to the relay that existing repositories should pick up (a template,
 a setting, the shape of a process file, what the docs should hold) adds an

@@ -18,7 +18,7 @@ written by `relay:setup`. If there is none, stop and suggest running
 section, before anything else. Below:
 
 - **Releases** says which release system the repo uses: **hand-cut** (§A) or
-  **release-please** (§B). With neither, stop and say so; `relay:setup` can
+  **release-please** (§B). With neither, stop and say so; `relay:update` can
   add hand-cut releases.
 - `<integration>` is the **Integration branch**.
 - `<release>` is the **Release branch**. It may be the same branch as

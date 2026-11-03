@@ -14,7 +14,7 @@ run it. It needs only the standard library. It checks:
 - every `relay:<skill>` a plugin file mentions names a skill that exists in
   one of the catalog's plugins;
 - every `templates/...` path a SKILL.md or MIGRATIONS.md mentions exists in
-  that skill;
+  that skill or the setup skill, which holds the shared ones;
 - a skill's MIGRATIONS.md (the Stamp convention) has front matter giving
   `stamp: 1`, the plugin's name as `system`, and a `source`; its entries are
   `## <N>: <title>` headings, newest first, numbered without gaps down to
@@ -35,12 +35,14 @@ SEMVER = re.compile(r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$")
 SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SKILL_REF = re.compile(r"\brelay:([a-z0-9-]+)")
 TEMPLATE_REF = re.compile(r"`(templates/[^`\s]+)`")
+# The update skill applies what the setup skill's templates hold.
+TEMPLATES_SKILL = "setup"
 MIGRATION_HEADING = re.compile(r"^## (\d+): \S")
 OLD_NAME = re.compile(r"/relay-[a-z]|\brelay-(?:next|execute|project|release|setup|go|plan|review)\b")
 # The setup skill names the old skills on purpose, to migrate repos off them.
 OLD_NAMES_ALLOWED = {Path("skills/setup/SKILL.md")}
-# Text that only looks like an old name: the setup skill's planning branch.
-OLD_NAME_EXCEPTIONS = ("plan/relay-setup",)
+# Text that only looks like an old name: the setup and update skills' planning branches.
+OLD_NAME_EXCEPTIONS = ("plan/relay-setup", "plan/relay-update")
 
 
 def frontmatter(text):
@@ -131,7 +133,7 @@ def check_skills(plugin_dir, errors, plugin_name=None):
             check_migrations(migrations, plugin_name or plugin_dir.name, errors)
             text += migrations.read_text()
         for ref in TEMPLATE_REF.findall(text):
-            if not (skill / ref).exists():
+            if not (skill / ref).exists() and not (skills_dir / TEMPLATES_SKILL / ref).exists():
                 errors.append(f"{skill_md}: mentions {ref}, which doesn't exist")
         names.add(skill.name)
     return names

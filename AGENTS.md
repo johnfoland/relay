@@ -5,10 +5,10 @@ through `CLAUDE.md`'s `@AGENTS.md` import.
 
 relay is a plugin for Claude Code and Codex that runs a planner/executor
 workflow: the skills in `plugins/relay/skills/` (`go`, `project`, `quick`,
-`plan`, `execute`, `review`, `release`, `setup`) hand work between fresh agent
-sessions through local process files and pull requests. The product is the
-skills' text and the templates `setup` copies into other repositories. README.md
-covers installing and using it; `docs/decisions.md` records why it is shaped
+`plan`, `execute`, `review`, `release`, `setup`, `update`) hand work between
+fresh agent sessions through local process files and pull requests. The product
+is the skills' text and the templates `setup` copies into other repositories.
+README.md covers installing and using it; `docs/decisions.md` records why it is shaped
 the way it is.
 
 ## Before you start
@@ -24,7 +24,7 @@ the way it is.
   version is release-please's; never edit it by hand.
 - `plugins/relay/skills/<skill>/SKILL.md`: one skill per directory, the
   directory name equal to the frontmatter `name`. `setup/templates/` holds
-  what `relay:setup` writes into a repository, and `setup/MIGRATIONS.md` the
+  what `relay:setup` writes into a repository, and `update/MIGRATIONS.md` the
   changes to it that repositories set up earlier should be offered (DEC-13).
 - `plugins/relay-band/`: a second, Claude Code-only plugin (a mod): the
   `hooks/register.tsx` module draws a button above the prompt that runs
@@ -123,7 +123,7 @@ The roadmap is the issue list on `johnfoland/relay`. Keep it current:
   about outcomes, not internals (DEC-12).
 - **Changes to what `setup` writes get a migration.** A change to a template,
   a setting, or the shape of a process file that existing repositories
-  should pick up adds the next entry to `setup/MIGRATIONS.md`, with **Detect**
+  should pick up adds the next entry to `update/MIGRATIONS.md`, with **Detect**
   and **Apply** lines, in the same pull request. A change only to how a skill
   runs does not (DEC-13).
 - **Old names live only in `setup`.** `setup`'s migration text is the one place

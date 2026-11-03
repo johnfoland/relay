@@ -29,7 +29,8 @@ Seven skills run the work, and an eighth runs whichever comes next:
 | `relay:execute` | Builds the brief unit by unit, with tests at its boundaries, on its own branch and draft pull request. |
 | `relay:review` | Reviews the chunk against the design docs and a short checklist, then sends it back or merges it. |
 | `relay:release` | Cuts a version, by hand from the changelog or through release-please. `relay:go` only ever suggests it. |
-| `relay:setup` | Adds the workflow to a repository, or brings one set up by an earlier relay up to date, offering each change since its last review. |
+| `relay:setup` | Adds the workflow to a repository, or adopts a planner/executor process it already has. |
+| `relay:update` | Brings a repository set up by an earlier relay up to date, offering each change since its last review, and changes its relay settings. `relay:go` only ever suggests it. |
 
 In Claude Code a skill runs as `/relay:<skill>`; in Codex, as
 `$relay:<skill>`.
@@ -87,6 +88,10 @@ that imports it, and a decision log if the repository has none) and the local
 From then on, open a fresh session for each step and run `/relay:go` (or
 `$relay:go` in Codex). It tells you which step it is running and why, and asks
 when the next step is not clear.
+
+After you update the plugin, `relay:go` says when a new version has changes
+for your repository. Run `relay:update` to choose which to apply, or to change
+a relay setting.
 
 ## Development
 

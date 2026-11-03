@@ -1,10 +1,10 @@
-# Written by relay:setup, which reads it on later runs to offer only what
-# changed in the relay since. Edit `deferred` or `declined` by hand to change
+# Read by relay:update, to offer only what changed in the relay since this
+# repository's last review. Edit `deferred` or `declined` by hand to change
 # what it offers.
 stamp = 1
 source = "https://github.com/johnfoland/relay"
 
-# The highest entry in relay:setup's MIGRATIONS.md this repository has been
+# The highest entry in relay:update's MIGRATIONS.md this repository has been
 # reviewed against.
 level = <N>
 
